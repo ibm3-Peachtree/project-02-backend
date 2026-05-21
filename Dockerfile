@@ -5,7 +5,9 @@ WORKDIR /build
 
 COPY . .
 
-RUN gradle clean bootJar --no-daemon
+RUN chmod +x ./gradlew
+
+RUN ./gradlew clean bootJar --no-daemon
 
 # ===== Run Stage =====
 FROM eclipse-temurin:21-jre
