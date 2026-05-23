@@ -50,4 +50,33 @@ public class LiveRouteController {
 
         return ResponseEntity.ok(liveRouteService.getRouteProgress());
     }
+
+
+//    @Operation(
+//            summary = "나의 경로 조회",
+//            description = "Redis에서 GPS 기반 실시간 내 경로 조회"
+//    )
+//    @ApiResponses({
+//            @ApiResponse(
+//                    responseCode = "200",
+//                    description = "경로 조회 성공",
+//                    content = @Content(
+//                            mediaType = "application/json",
+//                            schema = @Schema(implementation = RouteDto.class)
+//                    )
+//            ),
+//            @ApiResponse(
+//                    responseCode = "404",
+//                    description = "경로 조회 실패",
+//                    content = @Content(
+//                            mediaType = "application/json",
+//                            schema = @Schema(implementation = Void.class)
+//                    )
+//            )
+//    }
+//    )
+//    @GetMapping("/route")
+//    public ResponseEntity<RouteDto> getMyRoute(){
+//        return ResponseEntity.ok(liveRouteService.getMyRoute());
+//    }
 }

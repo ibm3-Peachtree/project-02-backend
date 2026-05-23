@@ -24,7 +24,6 @@ public class PostCommentEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Lob
     @Column(name = "comment", nullable = false)
     private String comment;
 

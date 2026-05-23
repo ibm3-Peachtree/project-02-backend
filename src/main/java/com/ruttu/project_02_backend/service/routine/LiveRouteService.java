@@ -2,6 +2,8 @@ package com.ruttu.project_02_backend.service.routine;
 
 import com.ruttu.project_02_backend.dto.routine.CurrentLocationDto;
 import com.ruttu.project_02_backend.dto.routine.SpeedDto;
+import com.ruttu.project_02_backend.repository.routine.UserRoutineRepository;
+import com.ruttu.project_02_backend.repository.user.UserAddressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,9 @@ import java.time.Instant;
 @RequiredArgsConstructor
 @Service
 public class LiveRouteService {
+
+    private UserRoutineRepository userRoutineRepository;
+    private UserAddressRepository userAddressRepository;
 
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -42,4 +47,15 @@ public class LiveRouteService {
             return "탑승중";
         }
     }
+//
+//    public void getMyRoute(){
+//        // 현위치, 목적지, 경로 정보 가져오기
+//        // 현 위치를 길찾기를 통해 일치하는 경로 선택
+//
+//
+//
+//
+//    }
+
+
 }
