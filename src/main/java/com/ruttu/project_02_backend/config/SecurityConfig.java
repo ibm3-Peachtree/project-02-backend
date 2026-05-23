@@ -1,6 +1,5 @@
 package com.ruttu.project_02_backend.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,7 +21,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/me/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/test-login").permitAll()
+                        .requestMatchers("/me/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

@@ -20,7 +20,6 @@ public class OauthMngtEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Lob
     @Column(name = "provider", nullable = false)
     private String provider;
 

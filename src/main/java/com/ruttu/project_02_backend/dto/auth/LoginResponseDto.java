@@ -1,12 +1,10 @@
 package com.ruttu.project_02_backend.dto.auth;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-@Data
+@Getter
 @AllArgsConstructor
-@NoArgsConstructor
 public class LoginResponseDto {
 
     private String accessToken;
