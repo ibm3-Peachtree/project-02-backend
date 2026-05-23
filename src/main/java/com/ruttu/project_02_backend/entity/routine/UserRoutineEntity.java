@@ -11,6 +11,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -46,13 +47,16 @@ public class UserRoutineEntity {
     private Integer preferredDowMask;
 
     @ColumnDefault("'ALL'")
-    @Lob
     @Column(name = "preferred_transport")
     private String preferredTransport;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "preferred_route", nullable = false)
     private Map<String, Object> preferredRoute;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "preferred_route_xy", nullable = false)
+    private List<Map<String, Object>> preferredRouteXy;
 
     @Column(name = "target_arrival_time", nullable = false)
     private LocalTime targetArrivalTime;
