@@ -22,7 +22,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/test-login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/me/**").permitAll()
                         .anyRequest().authenticated()
                 );

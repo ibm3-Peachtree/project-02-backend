@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface TokenMngtRepository extends JpaRepository<TokenMngtEntity, Long> {
-    Optional<TokenMngtEntity> findByUserId(Long userId);
+    Optional<TokenMngtEntity> findByRefreshTokenHash(String hashed);
 }

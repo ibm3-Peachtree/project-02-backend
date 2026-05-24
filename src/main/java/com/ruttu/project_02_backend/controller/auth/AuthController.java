@@ -3,8 +3,10 @@ package com.ruttu.project_02_backend.controller.auth;
 import com.ruttu.project_02_backend.config.JwtUtil;
 import com.ruttu.project_02_backend.dto.auth.GoogleLoginRequestDto;
 import com.ruttu.project_02_backend.dto.auth.LoginResponseDto;
+import com.ruttu.project_02_backend.dto.auth.LogoutDto;
 import com.ruttu.project_02_backend.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,13 +31,12 @@ public class AuthController {
             );
 
     }
-    //로그아웃
+    //로그아웃(refresh token 무효화)
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<String> logout(@RequestBody LogoutDto logoutDto) {
 
-        Long userId = jwtUtil.getUserIdFromToken(token.substring(7));
-
-        authService.logout(userId);
+        authService.logout(logoutDto.getRefreshToken());
 
         return ResponseEntity.ok("로그아웃 완료");
     }

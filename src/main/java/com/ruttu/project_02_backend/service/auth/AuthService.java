@@ -10,8 +10,10 @@ import com.ruttu.project_02_backend.dto.auth.LoginResponseDto;
 import com.ruttu.project_02_backend.entity.auth.TokenMngtEntity;
 import com.ruttu.project_02_backend.entity.user.UserEntity;
 import com.ruttu.project_02_backend.exception.auth.InvalidGoogleTokenException;
+import com.ruttu.project_02_backend.exception.auth.MissingTokenException;
 import com.ruttu.project_02_backend.repository.auth.TokenMngtRepository;
 import com.ruttu.project_02_backend.repository.user.UserRepository;
+import com.ruttu.project_02_backend.util.RefreshTokenHashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.User;
@@ -86,6 +88,8 @@ public class AuthService {
             token.setExpiresAt(expiresAt);
             token.setRevoked(false);
 
+            token.setCreatedAt(Instant.now());
+
             tokenMngtRepository.save(token);
 
             // 이 dto 형식으로 반환
@@ -133,13 +137,15 @@ public class AuthService {
 
     @Transactional
     //로그아웃 서비스
-    public void logout(Long userId) {
+    public void logout(String refreshToken) {
+        String hashed =
+                RefreshTokenHashUtil.hash(refreshToken);
 
-        TokenMngtEntity token = tokenMngtRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("토큰 없음"));
+        TokenMngtEntity token = tokenMngtRepository.findByRefreshTokenHash(hashed)
+                .orElseThrow(() -> new MissingTokenException("토큰이 존재하지 않습니다"));
 
         token.setRevoked(true);
 
-        System.out.println("로그아웃 성공 userId = " + userId);
+        System.out.println("로그아웃 성공");
     }
 }
