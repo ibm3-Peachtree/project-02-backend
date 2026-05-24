@@ -24,6 +24,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/google").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/me/**").permitAll()
+                        .requestMatchers("/me/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

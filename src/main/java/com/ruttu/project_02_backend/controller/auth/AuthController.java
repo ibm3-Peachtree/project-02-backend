@@ -7,6 +7,7 @@ import com.ruttu.project_02_backend.dto.auth.LogoutDto;
 import com.ruttu.project_02_backend.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +15,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
+@Tag(name = "Auth API", description = "인증 API")
 public class AuthController {
     private final AuthService authService;
-    private final JwtUtil jwtUtil;
     //구글 로그인
     @PostMapping("/google")
     @Operation(
@@ -31,8 +32,13 @@ public class AuthController {
             );
 
     }
+
     //로그아웃(refresh token 무효화)
     @PostMapping("/logout")
+    @Operation(
+            summary = "로그아웃",
+            description = "로그아웃"
+    )
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<String> logout(@RequestBody LogoutDto logoutDto) {
 

@@ -1,5 +1,7 @@
 package com.ruttu.project_02_backend.entity.routine;
 
+import com.ruttu.project_02_backend.dto.routine.RouteDto;
+import com.ruttu.project_02_backend.dto.routine.RouteXYDto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,15 +10,16 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "user_routine")
 public class UserRoutineEntity {
     @Id
@@ -44,7 +47,7 @@ public class UserRoutineEntity {
 
     @ColumnDefault("62")
     @Column(name = "preferred_dow_mask")
-    private Integer preferredDowMask;
+    private long preferredDowMask;
 
     @ColumnDefault("'ALL'")
     @Column(name = "preferred_transport")
@@ -52,11 +55,11 @@ public class UserRoutineEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "preferred_route", nullable = false)
-    private Map<String, Object> preferredRoute;
+    private RouteDto preferredRoute;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "preferred_route_xy", nullable = false)
-    private List<Map<String, Object>> preferredRouteXy;
+    private List<RouteXYDto> preferredRouteXy;
 
     @Column(name = "target_arrival_time", nullable = false)
     private LocalTime targetArrivalTime;
