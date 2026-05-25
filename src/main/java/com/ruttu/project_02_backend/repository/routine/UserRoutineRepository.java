@@ -13,4 +13,8 @@ public interface UserRoutineRepository extends JpaRepository<UserRoutineEntity, 
     List<UserRoutineEntity> findAllByTargetArrivalTimeAndUserId(
             LocalTime targetArrivalTime,
             Long userId
-    );}
+    );
+
+    List<UserRoutineEntity>  findAllByUserId(Long userId);
+}
+

@@ -80,9 +80,9 @@ public class RoutineService {
 
     // 내 루틴 조회
     @Transactional(readOnly = true)
-    public List<RoutineListDto> getRoutine() {
+    public List<RoutineListDto> getRoutine(Long userId) {
 
-        List<UserRoutineEntity> routines = userRoutineRepository.findAll();
+        List<UserRoutineEntity> routines = userRoutineRepository.findAllByUserId(userId);
 
         if (routines.isEmpty()) {
             throw new RoutineNotFoundException();

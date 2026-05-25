@@ -1,5 +1,6 @@
 package com.ruttu.project_02_backend.controller.routine;
 
+import com.ruttu.project_02_backend.config.CustomUserDetails;
 import com.ruttu.project_02_backend.dto.routine.*;
 import com.ruttu.project_02_backend.service.routine.RoutineService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,14 +9,18 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@SecurityRequirement(name="JWT")
 @Tag(name = "Routine API", description = "루틴 관리 API")
 @RestController
 @RequiredArgsConstructor
@@ -51,9 +56,10 @@ public class RoutineController {
     @PostMapping
     public ResponseEntity<Void> createRoutine(
             @RequestBody RoutineDto routineDto,
-            @RequestParam Long userId
+            Authentication authentication
     ) {
-        //usreId 처리
+        CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = user.getUserId();
         routineService.createRoutine(routineDto, userId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -85,7 +91,7 @@ public class RoutineController {
     @DeleteMapping("/{routineId}")
     public ResponseEntity<Void> deleteRoutine(
             @PathVariable Long routineId
-    ){
+    ) {
         routineService.deleteRoutine(routineId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
@@ -117,10 +123,11 @@ public class RoutineController {
     @PutMapping("/{routineId}")
     public ResponseEntity<Void> updateRoutine(
             @PathVariable Long routineId,
-            @RequestParam Long userId,
-            @RequestBody RoutineDto routineDto
-    ){
-        // userId 변경
+            @RequestBody RoutineDto routineDto,
+            Authentication authentication
+    ) {
+        CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = user.getUserId();
         routineService.updateRoutine(routineId, routineDto, userId);
        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
@@ -151,8 +158,12 @@ public class RoutineController {
             )
     })
     @GetMapping()
-    public ResponseEntity<List<RoutineListDto>> getRoutine(){
-        return ResponseEntity.ok(routineService.getRoutine());
+    public ResponseEntity<List<RoutineListDto>> getRoutine(
+            Authentication authentication
+    ) {
+        CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = user.getUserId();
+        return ResponseEntity.ok(routineService.getRoutine(userId));
     }
 
 
@@ -213,9 +224,10 @@ public class RoutineController {
     @GetMapping("/routes/recommend/{recoId}")
     public ResponseEntity<RouteDto> getRouteDetail(
             @PathVariable int recoId,
-            @RequestParam Long userId
-    ){
-        // Auth 받아오면 userId 따로 빼기
+            Authentication authentication
+    ) {
+        CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = user.getUserId();
         return ResponseEntity.ok(routineService.getRouteDetail(recoId, userId));
     }
 
@@ -249,9 +261,10 @@ public class RoutineController {
     public ResponseEntity<List<RouteListDto>> getRoute(
             @RequestParam Long originId,
             @RequestParam Long destinationId,
-            @RequestParam Long userId
-    ){
-        // Auth 받아오면 userId 따로 빼기
+            Authentication authentication
+    ) {
+        CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = user.getUserId();
         return ResponseEntity.ok(routineService.getRoute(originId, destinationId, userId));
     }
 }
