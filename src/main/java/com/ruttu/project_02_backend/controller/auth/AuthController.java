@@ -1,16 +1,19 @@
 package com.ruttu.project_02_backend.controller.auth;
 
-import com.ruttu.project_02_backend.config.JwtUtil;
 import com.ruttu.project_02_backend.dto.auth.GoogleLoginRequestDto;
 import com.ruttu.project_02_backend.dto.auth.LoginResponseDto;
 import com.ruttu.project_02_backend.dto.auth.LogoutDto;
+import com.ruttu.project_02_backend.dto.auth.RefreshTokenRequestDto;
 import com.ruttu.project_02_backend.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -45,5 +48,17 @@ public class AuthController {
         authService.logout(logoutDto.getRefreshToken());
 
         return ResponseEntity.ok("로그아웃 완료");
+    }
+
+    @PostMapping("/refresh")
+    @Operation(
+            summary = "refresh token",
+            description = "refresh token 테스트"
+    )
+    public ResponseEntity<LoginResponseDto> refresh(
+            @RequestBody RefreshTokenRequestDto request
+    ) {
+        LoginResponseDto response = authService.refresh(request.getRefreshToken());
+        return ResponseEntity.ok(response);
     }
 }

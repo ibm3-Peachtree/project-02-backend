@@ -14,8 +14,6 @@ import com.ruttu.project_02_backend.exception.auth.MissingTokenException;
 import com.ruttu.project_02_backend.repository.auth.TokenMngtRepository;
 import com.ruttu.project_02_backend.repository.user.UserRepository;
 import com.ruttu.project_02_backend.util.RefreshTokenHashUtil;
-import com.ruttu.project_02_backend.repository.auth.TokenMngtRepository;
-import com.ruttu.project_02_backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.User;
@@ -149,5 +147,41 @@ public class AuthService {
         token.setRevoked(true);
 
         System.out.println("로그아웃 성공");
+    }
+
+    @Transactional
+    public LoginResponseDto refresh(String refreshToken) {
+
+        // 1. hash(암호화)
+        String hashed = RefreshTokenHashUtil.hash(refreshToken);
+
+        // 2. DB 조회
+        TokenMngtEntity token = tokenMngtRepository
+                .findByRefreshTokenHash(hashed)
+                .orElseThrow(() -> new RuntimeException("토큰 없음"));
+
+        // 3. revoke 체크
+        if (Boolean.TRUE.equals(token.getRevoked())) {
+            throw new RuntimeException("로그아웃된 토큰");
+        }
+
+        // 4. 만료 체크
+        if (token.getExpiresAt().isBefore(Instant.now())) {
+            throw new RuntimeException("만료된 토큰");
+        }
+
+        // 5. 유저 조회
+        UserEntity user = userRepository.findById(token.getUserId())
+                .orElseThrow();
+
+        // 6. 새 access token 발급
+        String newAccessToken =
+                jwtUtil.generateAccessToken(user.getId(), user.getRole());
+
+        return new LoginResponseDto(
+                newAccessToken,
+                refreshToken,
+                user.getId()
+        );
     }
 }
