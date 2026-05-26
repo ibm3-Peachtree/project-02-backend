@@ -96,7 +96,9 @@ public class AuthService {
             return new LoginResponseDto(
                     accessToken,
                     refreshToken,
-                    userEntity.getId()
+                    userEntity.getId(),
+                    email,
+                    nickname
             );
         }catch(Exception e){
             throw new RuntimeException("로그인 실패");
@@ -181,7 +183,9 @@ public class AuthService {
         return new LoginResponseDto(
                 newAccessToken,
                 refreshToken,
-                user.getId()
+                user.getId(),
+                user.getEmail(),
+                user.getNickname()
         );
     }
 }

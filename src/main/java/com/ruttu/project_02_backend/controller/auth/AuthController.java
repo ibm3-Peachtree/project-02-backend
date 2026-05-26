@@ -30,6 +30,7 @@ public class AuthController {
     public ResponseEntity<LoginResponseDto> googleLogin(
             @RequestBody GoogleLoginRequestDto request
     ){
+        System.out.println("🔥 API 들어옴");
         return ResponseEntity.ok(
                 authService.googleLogin(request)
         );
