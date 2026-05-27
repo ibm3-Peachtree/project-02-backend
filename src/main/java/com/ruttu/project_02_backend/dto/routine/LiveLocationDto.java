@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class LocationDto {
+public class LiveLocationDto {
 
     private double lat;
     private double lng;

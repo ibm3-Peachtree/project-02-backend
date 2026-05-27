@@ -12,8 +12,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+<<<<<<< Updated upstream
+=======
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+>>>>>>> Stashed changes
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @Tag(name = "Routine API", description = "루틴 관리 API")
@@ -51,10 +55,17 @@ public class RoutineController {
     @PostMapping
     public ResponseEntity<Void> createRoutine(
             @RequestBody RoutineDto routineDto,
+<<<<<<< Updated upstream
             @RequestParam Long userId
     ) {
         //usreId 처리
         routineService.createRoutine(routineDto, userId);
+=======
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        routineService.createRoutine(routineDto, user.getUserId());
+>>>>>>> Stashed changes
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -117,11 +128,19 @@ public class RoutineController {
     @PutMapping("/{routineId}")
     public ResponseEntity<Void> updateRoutine(
             @PathVariable Long routineId,
+<<<<<<< Updated upstream
             @RequestParam Long userId,
             @RequestBody RoutineDto routineDto
     ){
         // userId 변경
         routineService.updateRoutine(routineId, routineDto, userId);
+=======
+            @RequestBody RoutineDto routineDto,
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        routineService.updateRoutine(routineId, routineDto, user.getUserId());
+>>>>>>> Stashed changes
        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
@@ -151,8 +170,16 @@ public class RoutineController {
             )
     })
     @GetMapping()
+<<<<<<< Updated upstream
     public ResponseEntity<List<RoutineListDto>> getRoutine(){
         return ResponseEntity.ok(routineService.getRoutine());
+=======
+    public ResponseEntity<List<RoutineListDto>> getRoutine(
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        return ResponseEntity.ok(routineService.getRoutine(user.getUserId()));
+>>>>>>> Stashed changes
     }
 
 
@@ -213,10 +240,17 @@ public class RoutineController {
     @GetMapping("/routes/recommend/{recoId}")
     public ResponseEntity<RouteDto> getRouteDetail(
             @PathVariable int recoId,
+<<<<<<< Updated upstream
             @RequestParam Long userId
     ){
         // Auth 받아오면 userId 따로 빼기
         return ResponseEntity.ok(routineService.getRouteDetail(recoId, userId));
+=======
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        return ResponseEntity.ok(routineService.getRouteDetail(recoId, user.getUserId()));
+>>>>>>> Stashed changes
     }
 
 
@@ -249,9 +283,16 @@ public class RoutineController {
     public ResponseEntity<List<RouteListDto>> getRoute(
             @RequestParam Long originId,
             @RequestParam Long destinationId,
+<<<<<<< Updated upstream
             @RequestParam Long userId
     ){
         // Auth 받아오면 userId 따로 빼기
         return ResponseEntity.ok(routineService.getRoute(originId, destinationId, userId));
+=======
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        return ResponseEntity.ok(routineService.getRoute(originId, destinationId, user.getUserId()));
+>>>>>>> Stashed changes
     }
 }
