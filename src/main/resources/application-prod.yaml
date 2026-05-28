@@ -26,3 +26,4 @@ server:
   port: 80
   servlet:
     context-path: /
+  forward-headers-strategy: framework    

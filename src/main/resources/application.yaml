@@ -4,7 +4,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update   # create, create-drop, update, validate 중 선택
-        
+
 odsay:
   api:
     key: ${ODSAY_API}
