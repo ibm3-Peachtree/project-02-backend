@@ -3,6 +3,7 @@ package com.ruttu.project_02_backend.service.routine;
 import com.ruttu.project_02_backend.dto.routine.*;
 import com.ruttu.project_02_backend.entity.routine.UserRoutineEntity;
 import com.ruttu.project_02_backend.entity.user.UserAddressEntity;
+import com.ruttu.project_02_backend.exception.routine.DuplicateRoutineNameException;
 import com.ruttu.project_02_backend.exception.routine.DuplicateRoutineTargetArrivalTimeException;
 import com.ruttu.project_02_backend.exception.routine.RoutineNotFoundException;
 import com.ruttu.project_02_backend.exception.user.AddressNotFoundException;
@@ -36,13 +37,15 @@ public class RoutineService {
     // 내 루틴 생성
     @Transactional
     public void createRoutine(RoutineDto routineDto, Long userId) {
+        List<UserRoutineEntity> user = userRoutineRepository.findAllByUserId(userId);
+        boolean duplicateName = user.stream()
+                .anyMatch(r -> r.getRoutineName().equals(routineDto.getRoutineName()));
 
-        boolean overlap = userRoutineRepository
-                .findAllByTargetArrivalTimeAndUserId(
-                        routineDto.getTargetArrivalTime(),
-                        userId
-                )
-                .stream()
+        if (duplicateName) {
+            throw new DuplicateRoutineNameException();
+        }
+
+        boolean overlap =  user.stream()
                 .anyMatch(s ->
                         hasDayOverlap(
                                 fromBitMask(s.getPreferredDowMask(),7), // 기존 DB
@@ -84,9 +87,9 @@ public class RoutineService {
 
         List<UserRoutineEntity> routines = userRoutineRepository.findAllByUserId(userId);
 
-        if (routines.isEmpty()) {
-            throw new RoutineNotFoundException();
-        }
+//        if (routines.isEmpty()) {
+//            throw new RoutineNotFoundException();
+//        }
 
         return routines.stream()
                 .map(r ->
