@@ -45,7 +45,7 @@ public class AuthController {
     )
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<String> logout(@RequestBody LogoutDto logoutDto) {
-
+        System.out.println("🔥 로그아웃 API 들어옴");
         authService.logout(logoutDto.getRefreshToken());
 
         return ResponseEntity.ok("로그아웃 완료");
