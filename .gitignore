@@ -32,13 +32,10 @@ out/
 /dist/
 /nbdist/
 /.nb-gradle/
-
 ### VS Code ###
 .vscode/
 
 
 # config secrets
-**/application.yaml
-**/application-local.yaml
-**/application-prod.yaml
-**/key-bastion.pem
+**/*.pem
+**.env
