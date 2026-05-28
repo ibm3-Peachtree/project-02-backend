@@ -1,8 +1,7 @@
 package com.ruttu.project_02_backend.entity.user;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -13,22 +12,30 @@ import java.time.LocalTime;
 @Getter
 @Setter
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "users")
 public class UserEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+
+    @Column(unique = true)
+    private String email; //이메일
+    private String provider; //어떤 계정으로 로그인 했나
+    @Column(unique = true)
+    private String providerId; //Google이 사용자에게 부여하는 "고유 ID"
 
     @Column(name = "nickname")
     private String nickname;
 
     @ColumnDefault("'USER'")
-    @Lob
     @Column(name = "role")
     private String role;
 
     @ColumnDefault("'ACTIVE'")
-    @Lob
     @Column(name = "status")
     private String status;
 

@@ -1,21 +1,22 @@
 package com.ruttu.project_02_backend.dto.routine;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class RouteDto {
-
-    private int pathType;
+    private int recoId;
     private int totalDistance;
-    private int trafficDistance;
-    private int totalWalk;
     private int totalTime;
     private int payment;
-    private List<PathDto> path;
+    private String startName;
+    private String endName;
+    private List<RouteSectionDto> path;
 }

@@ -27,7 +27,6 @@ public class PostEntity {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Lob
     @Column(name = "content")
     private String content;
 
@@ -38,11 +37,9 @@ public class PostEntity {
     @Column(name = "location")
     private Map<String, Object> location;
 
-    @Lob
     @Column(name = "issue_type", nullable = false)
     private String issueType;
 
-    @Lob
     @Column(name = "status")
     private String status;
 

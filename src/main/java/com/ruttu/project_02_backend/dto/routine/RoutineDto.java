@@ -1,20 +1,23 @@
 package com.ruttu.project_02_backend.dto.routine;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.time.LocalTime;
 import java.util.List;
 
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
 public class RoutineDto {
 
     private String routineName;
-    private String targetArrivalTime;
-    private Long departureAddressId;
-    private Long arrivalAddressId;
-    private Long routeId;
-    private List<String> days;
+    private List<Boolean> dow;
+    private LocalTime targetArrivalTime;
+    private String originAlias;
+    private String origin;
+    private String destinationAlias;
+    private String destination;
+    private int recoId;
 }
