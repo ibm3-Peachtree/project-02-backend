@@ -1,33 +1,27 @@
-package com.ruttu.project_02_backend.dto.routine;
+package com.ruttu.project_02_backend.dto.routine.Odsay;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.List;
 
 @Getter
 @NoArgsConstructor
-public class SubwaySectionDto extends TransitSectionDto {
+public class BusSectionDto extends TransitSectionDto {
 
-    @Setter
-    private String way;
-
-    public SubwaySectionDto(
+    public BusSectionDto(
             int sectionTime,
             List<String> no,
             String start,
             String end,
             Integer stationCount,
-            List<String> stationName,
-            String way
+            List<String> stationName
     ) {
         super(sectionTime, no, start, end, stationCount, stationName);
-        this.way = way;
     }
 
     @Override
     public String getType() {
-        return "subway";
+        return "bus";
     }
 }

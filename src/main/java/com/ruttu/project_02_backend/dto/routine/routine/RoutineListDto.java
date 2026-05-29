@@ -1,4 +1,4 @@
-package com.ruttu.project_02_backend.dto.routine;
+package com.ruttu.project_02_backend.dto.routine.routine;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,7 +8,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class RoutineDetailDto {
+public class RoutineListDto {
     private Long routineId;
     private String routineName;
     private String originAlias;
@@ -17,5 +17,4 @@ public class RoutineDetailDto {
     private LocalTime targetArrivalTime;
     private LocalTime recommendedDepartureTime;
     private int estimatedDuration;
-    private RouteDto route;
 }

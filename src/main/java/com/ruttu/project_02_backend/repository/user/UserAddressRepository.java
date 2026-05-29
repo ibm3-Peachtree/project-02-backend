@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserAddressRepository extends JpaRepository<UserAddressEntity, Long> {
+    UserAddressEntity findByUserIdAndAlias(Long userId, String alias);
 }
