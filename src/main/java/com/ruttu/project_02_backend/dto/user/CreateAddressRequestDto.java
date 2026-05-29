@@ -12,5 +12,7 @@ import lombok.Setter;
 public class CreateAddressRequestDto {
 
     private String name;
-    private String address;
+    private String roadAddress;
+    private String jibunAddress;
+
 }

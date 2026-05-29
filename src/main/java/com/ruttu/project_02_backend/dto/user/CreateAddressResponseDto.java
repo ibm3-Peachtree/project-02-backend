@@ -13,7 +13,8 @@ public class CreateAddressResponseDto {
 
     private Long addressId;
     private String name;
-    private String address;
+    private String roadAddress;
+    private String jibunAddress;
     private Double latitude;
     private Double longitude;
 }
