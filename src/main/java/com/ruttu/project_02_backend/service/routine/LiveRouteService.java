@@ -156,9 +156,11 @@ public class LiveRouteService {
 
         return new CurrentSectionDto(
                 nearestIndex,
-                routeXY.stream().map(r-> r.getType()).toList()
+                routeXY.stream().map(r-> r.getType()).toList(),
+                routeXY
         );
     }
+
 
     private double distanceMeters(double lat1, double lng1, double lat2, double lng2) {
         final double R = 6371000;
