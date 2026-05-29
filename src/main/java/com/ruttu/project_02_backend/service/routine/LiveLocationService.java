@@ -1,6 +1,6 @@
 package com.ruttu.project_02_backend.service.routine;
 
-import com.ruttu.project_02_backend.dto.routine.LiveLocationDto;
+import com.ruttu.project_02_backend.dto.routine.location.LiveLocationDto;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;

@@ -32,10 +32,11 @@ out/
 /dist/
 /nbdist/
 /.nb-gradle/
+
 ### VS Code ###
 .vscode/
 
 
 # config secrets
-**/*.pem
-**.env
+**/key-bastion.pem
+**/*.env

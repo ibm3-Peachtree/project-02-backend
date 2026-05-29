@@ -1,7 +1,11 @@
 package com.ruttu.project_02_backend.controller.routine;
 
 import com.ruttu.project_02_backend.config.CustomUserDetails;
-import com.ruttu.project_02_backend.dto.routine.*;
+import com.ruttu.project_02_backend.dto.routine.Odsay.RouteDto;
+import com.ruttu.project_02_backend.dto.routine.routine.RouteListDto;
+import com.ruttu.project_02_backend.dto.routine.routine.RoutineDetailDto;
+import com.ruttu.project_02_backend.dto.routine.routine.RoutineDto;
+import com.ruttu.project_02_backend.dto.routine.routine.RoutineListDto;
 import com.ruttu.project_02_backend.service.routine.RoutineService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -9,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +27,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/me/routines")
+@SecurityRequirement(name="JWT")
 public class RoutineController {
 
     private final RoutineService routineService;
