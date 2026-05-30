@@ -1,5 +1,6 @@
 package com.ruttu.project_02_backend.service.user;
 
+import com.ruttu.project_02_backend.config.CustomUserDetails;
 import com.ruttu.project_02_backend.dto.kakao.GeoResultDto;
 import com.ruttu.project_02_backend.dto.user.CreateAddressRequestDto;
 import com.ruttu.project_02_backend.dto.user.CreateAddressResponseDto;
@@ -8,7 +9,6 @@ import com.ruttu.project_02_backend.repository.user.UserAddressRepository;
 import com.ruttu.project_02_backend.service.kakao.KakaoGeoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -35,7 +35,7 @@ public class AddressService {
         userAddressEntity.setLng(BigDecimal.valueOf(geoResultDto.getLongitude()));
 
         // 현재 로그인 사용자 정보 가져오기
-        User user = (User) SecurityContextHolder
+        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
