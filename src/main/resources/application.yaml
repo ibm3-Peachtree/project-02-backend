@@ -1,9 +1,6 @@
 spring:
   application:
     name: project-02-backend
-  jpa:
-    hibernate:
-      ddl-auto: update   # create, create-drop, update, validate 중 선택
 
 odsay:
   api:
