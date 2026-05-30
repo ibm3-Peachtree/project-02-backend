@@ -30,7 +30,11 @@ public class AddressService {
         UserAddressEntity userAddressEntity = new UserAddressEntity();
         userAddressEntity.setAlias(createAddressRequestDto.getName());
         userAddressEntity.setRoadAddress(createAddressRequestDto.getRoadAddress());
-        userAddressEntity.setJibunAddress(createAddressRequestDto.getJibunAddress());
+        String jibun = createAddressRequestDto.getJibunAddress();
+        userAddressEntity.setJibunAddress(
+                (jibun != null && !jibun.isBlank()) ? jibun : createAddressRequestDto.getRoadAddress()
+        );
+
         userAddressEntity.setLat(BigDecimal.valueOf(geoResultDto.getLatitude()));
         userAddressEntity.setLng(BigDecimal.valueOf(geoResultDto.getLongitude()));
 
@@ -40,9 +44,7 @@ public class AddressService {
                 .getAuthentication()
                 .getPrincipal();
         // 로그인 사용자 ID 저장
-        userAddressEntity.setUserId(
-                Long.valueOf(user.getUsername())
-        );
+        userAddressEntity.setUserId(user.getUserId());
 
         // 2️⃣ DB 저장
         UserAddressEntity saved = userAddressRepository.save(userAddressEntity);
