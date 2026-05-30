@@ -9,10 +9,9 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateAddressDto {
+public class UpdateAddressDto { // 주소 수정 dto
 
     private String name;
-    private String address;
-    private Double latitude;
-    private Double longitude;
+    private String roadAddress;
+    private String jibunAddress;
 }
