@@ -15,7 +15,7 @@ import java.util.Date;
 public class JwtUtil {
     @Value("${jwt.secretKey}")
     private String secretKey;
-    private final long expirationMs = 5 * 60 * 1000; //토큰 만료 시간 (5분)
+    private final long expirationMs = 60 * 60 * 1000; //토큰 만료 시간 (1시간)
     private final long refreshExpirationMs = 1000 * 60 * 60 * 24 * 14; //14일
     //토큰 생성
     public String generateAccessToken(Long userId, String role){
