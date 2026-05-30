@@ -2,9 +2,9 @@ package com.ruttu.project_02_backend.service.routine;
 
 import com.ruttu.project_02_backend.dto.routine.Odsay.*;
 import com.ruttu.project_02_backend.dto.routine.Odsay.RouteSectionDto;
-import com.ruttu.project_02_backend.entity.user.UserAddressEntity;
+import com.ruttu.project_02_backend.entity.prod.user.UserAddressEntity;
 import com.ruttu.project_02_backend.exception.user.AddressNotFoundException;
-import com.ruttu.project_02_backend.repository.user.UserAddressRepository;
+import com.ruttu.project_02_backend.repository.prod.user.UserAddressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
