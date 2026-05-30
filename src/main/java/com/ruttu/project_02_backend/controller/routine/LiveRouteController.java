@@ -1,6 +1,7 @@
 package com.ruttu.project_02_backend.controller.routine;
 
 import com.ruttu.project_02_backend.config.CustomUserDetails;
+import com.ruttu.project_02_backend.dto.routine.live.RoutineCompleteDto;
 import com.ruttu.project_02_backend.dto.routine.live.CurrentSectionDto;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentLocationDto;
 import com.ruttu.project_02_backend.dto.routine.live.LiveRouteDto;
@@ -12,14 +13,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Live Routine API", description = "실시간 루틴 관리 API")
 @RestController
@@ -156,4 +154,36 @@ public class LiveRouteController {
         return ResponseEntity.ok(liveRouteService.getCurrentSection(user.getUserId()));
     }
 
+    @Operation(
+            summary = "실시간 경로 안내 종료",
+            description = "실시간 경로 안내 종료"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "저장 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "저장 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            )
+    }
+    )
+    @PostMapping("/complete")
+    public ResponseEntity<Void> completed(
+            @RequestBody RoutineCompleteDto routineCompleteDto,
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        liveRouteService.completed(user.getUserId(),routineCompleteDto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 }
