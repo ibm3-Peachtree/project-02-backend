@@ -35,6 +35,8 @@ public class LiveRouteService {
     private final OdsayIOService odsayIOService;
     private final RoutineService routineService;
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     @Transactional(readOnly = true)
     public CurrentLocationDto getRouteProgress(Long userId) {
         SpeedDto speed = routineService.readJson(
@@ -231,7 +233,7 @@ public class LiveRouteService {
                 routineCompleteDto.getSatWaitTimeScore(),
                 routineCompleteDto.getSatEtaScore(),
                 routineCompleteDto.getSatRouteScore(),
-                LocalDate.now()
+                LocalDate.now(KST)
         );
         UserDailyStatsEntity entity = new UserDailyStatsEntity();
         entity.setUserId(userId);
@@ -252,7 +254,7 @@ public class LiveRouteService {
         entity.setSatWaitTimeScore(routineCompleteDto.getSatWaitTimeScore());
         entity.setSatEtaScore(routineCompleteDto.getSatEtaScore());
         entity.setSatRouteScore(routineCompleteDto.getSatRouteScore());
-        entity.setDate(LocalDate.now());
+        entity.setDate(LocalDate.now(KST));
         userDailyStatsRepository.save(entity);
 
         // redis 삭제
@@ -296,21 +298,19 @@ public class LiveRouteService {
         String json = mapper.writeValueAsString(routeXYForReportDto);
         redisTemplate.opsForValue().set(key, json);
     }
-
     private UserRoutineEntity getTodayRoutine(Long userId){
         return userRoutineRepository.findAllByUserId(userId)
                 .stream()
                 .filter(r -> isToday(r.getPreferredDowMask()))
                 .min(Comparator.comparingInt(item ->
-                        Math.abs(LocalTime.now().toSecondOfDay()
+                        Math.abs(LocalTime.now(KST).toSecondOfDay()
                                 - item.getRecoDepartureTime().toSecondOfDay())
                 ))
                 .orElse(null);
     }
 
-
     private boolean isToday(long mask) {
-        int todayIndex = LocalDate.now().getDayOfWeek().getValue() - 1;
+        int todayIndex = LocalDate.now(KST).getDayOfWeek().getValue() - 1;
         return (mask & (1L << todayIndex)) != 0;
     }
 
