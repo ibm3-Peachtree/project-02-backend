@@ -1,17 +1,17 @@
 package com.ruttu.project_02_backend.dto.user;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateAddressDto { // 주소 수정 dto
-
+@Builder
+public class UpdateAddressResponseDto { // 주소 수정 후 dto
+    private Long addressId;
     private String name;
     private String roadAddress;
     private String jibunAddress;
+    private Double latitude;
+    private Double longitude;
 }
