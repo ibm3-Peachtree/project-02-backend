@@ -1,4 +1,4 @@
-package com.ruttu.project_02_backend.dto.routine;
+package com.ruttu.project_02_backend.dto.routine.routine;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

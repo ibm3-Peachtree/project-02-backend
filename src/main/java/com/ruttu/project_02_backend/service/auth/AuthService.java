@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.ruttu.project_02_backend.config.CustomUserDetails;
 import com.ruttu.project_02_backend.config.JwtUtil;
 import com.ruttu.project_02_backend.dto.auth.GoogleLoginRequestDto;
 import com.ruttu.project_02_backend.dto.auth.LoginResponseDto;
@@ -16,8 +17,6 @@ import com.ruttu.project_02_backend.repository.user.UserRepository;
 import com.ruttu.project_02_backend.util.RefreshTokenHashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -125,16 +124,15 @@ public class AuthService {
         return userRepository.save(userEntity);
     }
     //토큰 검증 이후 유저 정보 꺼내오기
-    public UserDetails loadUserById(Long userId){
+    public CustomUserDetails loadUserById(Long userId){
 
         UserEntity userEntity = userRepository.findById(userId)
                 .orElseThrow();
 
-        return User.builder()
-                .username(String.valueOf(userEntity.getId()))
-                .password("")
-                .roles(userEntity.getRole())
-                .build();
+        return new CustomUserDetails(
+                userEntity.getId(),
+                userEntity.getEmail()
+        );
     }
 
     @Transactional

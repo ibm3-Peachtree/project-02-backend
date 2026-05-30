@@ -1,5 +1,6 @@
-package com.ruttu.project_02_backend.dto.routine;
+package com.ruttu.project_02_backend.dto.routine.routine;
 
+import com.ruttu.project_02_backend.dto.routine.Odsay.RouteDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -8,7 +9,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class RoutineListDto {
+public class RoutineDetailDto {
     private Long routineId;
     private String routineName;
     private String originAlias;
@@ -17,4 +18,5 @@ public class RoutineListDto {
     private LocalTime targetArrivalTime;
     private LocalTime recommendedDepartureTime;
     private int estimatedDuration;
+    private RouteDto route;
 }

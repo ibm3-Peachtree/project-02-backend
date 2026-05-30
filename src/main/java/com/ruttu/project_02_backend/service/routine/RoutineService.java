@@ -1,13 +1,16 @@
 package com.ruttu.project_02_backend.service.routine;
 
-import com.ruttu.project_02_backend.dto.routine.*;
+import com.ruttu.project_02_backend.dto.routine.Odsay.*;
+import com.ruttu.project_02_backend.dto.routine.Odsay.RouteSectionDto;
+import com.ruttu.project_02_backend.dto.routine.routine.RouteListDto;
+import com.ruttu.project_02_backend.dto.routine.routine.RoutineDetailDto;
+import com.ruttu.project_02_backend.dto.routine.routine.RoutineDto;
+import com.ruttu.project_02_backend.dto.routine.routine.RoutineListDto;
 import com.ruttu.project_02_backend.entity.routine.UserRoutineEntity;
-import com.ruttu.project_02_backend.entity.user.UserAddressEntity;
+import com.ruttu.project_02_backend.exception.routine.DuplicateRoutineNameException;
 import com.ruttu.project_02_backend.exception.routine.DuplicateRoutineTargetArrivalTimeException;
 import com.ruttu.project_02_backend.exception.routine.RoutineNotFoundException;
-import com.ruttu.project_02_backend.exception.user.AddressNotFoundException;
 import com.ruttu.project_02_backend.repository.routine.UserRoutineRepository;
-import com.ruttu.project_02_backend.repository.user.UserAddressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -16,17 +19,13 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
 public class RoutineService {
     private final UserRoutineRepository userRoutineRepository;
-    private final UserAddressRepository userAddressRepository;
 
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -36,13 +35,15 @@ public class RoutineService {
     // 내 루틴 생성
     @Transactional
     public void createRoutine(RoutineDto routineDto, Long userId) {
+        List<UserRoutineEntity> user = userRoutineRepository.findAllByUserId(userId);
+        boolean duplicateName = user.stream()
+                .anyMatch(r -> r.getRoutineName().equals(routineDto.getRoutineName()));
 
-        boolean overlap = userRoutineRepository
-                .findAllByTargetArrivalTimeAndUserId(
-                        routineDto.getTargetArrivalTime(),
-                        userId
-                )
-                .stream()
+        if (duplicateName) {
+            throw new DuplicateRoutineNameException();
+        }
+
+        boolean overlap =  user.stream()
                 .anyMatch(s ->
                         hasDayOverlap(
                                 fromBitMask(s.getPreferredDowMask(),7), // 기존 DB
@@ -84,9 +85,9 @@ public class RoutineService {
 
         List<UserRoutineEntity> routines = userRoutineRepository.findAllByUserId(userId);
 
-        if (routines.isEmpty()) {
-            throw new RoutineNotFoundException();
-        }
+//        if (routines.isEmpty()) {
+//            throw new RoutineNotFoundException();
+//        }
 
         return routines.stream()
                 .map(r ->
@@ -141,25 +142,25 @@ public class RoutineService {
             Long destinationId,
             Long userId
     ) {       // 주소를 조회하여 lat, lng 값 가져오기
-        OdsayXYDto xy = getOdsayXy(originId, destinationId);
+        OdsayXYDto xy = odsayIOService.getOdsayXyById(originId, destinationId);
 
         // odsay 경로 조회
         try {
 
             OdsayResponseDto routes = odsayIOService.getOdsay(xy);
 
-            List<OdsayPathDto> path = getPath(routes); // pathType: 1-지하철, 2-버스, 3-버스+지하철
-            List<OdsayPathDto.Info> infos = getInfo(path);
-            List<List<OdsayPathDto.SubPath>> subPaths = getSubPaths(path);
+            List<OdsayPathDto> paths = odsayIOService.getPath(routes, 5); // pathType: 1-지하철, 2-버스, 3-버스+지하철
+            List<OdsayPathDto.Info> infos = odsayIOService.getInfo(paths);
+            List<List<OdsayPathDto.SubPath>> subPaths = odsayIOService.getSubPaths(paths);
 
 
             // 상세보기 버전 생성하여 Redis에 넣기
             saveDetailRoutes(subPaths, infos, userId);
 
             // x,y 좌표 저장
-            saveRouteXY(path, userId);
+            saveRouteXY(paths, userId);
 
-            List<List<String>> trafficTypes = getTrafficTypeNo(subPaths);
+            List<List<String>> trafficTypes = odsayIOService.getTrafficTypeNo(subPaths);
             return IntStream.range(0, infos.size())
                     .mapToObj(i -> {
 
@@ -237,7 +238,7 @@ public class RoutineService {
     private static String routeFullKey(Long userId, int recoId) {
         return "routine:route:full:user:" + userId + ":" + recoId;
     }
-    private <T> T readJson(String raw, Class<T> type) {
+    public  <T> T readJson(String raw, Class<T> type) {
         if (raw == null || raw.isBlank()) {
             throw new IllegalStateException("Redis에 경로 데이터가 없습니다.");
         }
@@ -248,7 +249,7 @@ public class RoutineService {
         }
     }
 
-    private <T> T readJson(String raw, TypeReference<T> typeRef) {
+    public <T> T readJson(String raw, TypeReference<T> typeRef) {
         if (raw == null || raw.isBlank()) {
             throw new IllegalStateException("Redis에 경로 데이터가 없습니다.");
         }
@@ -259,26 +260,7 @@ public class RoutineService {
         }
     }
 
-    private List<OdsayPathDto> getPath(OdsayResponseDto routes){
-        return routes.getResult()
-        .getPath()
-        .stream()
-        .limit(5).toList();
-    }
 
-    private List<OdsayPathDto.Info> getInfo(List<OdsayPathDto> path){
-        return path.stream()
-        .map(OdsayPathDto::getInfo)
-        .toList();
-
-    }
-
-    private List<List<OdsayPathDto.SubPath>> getSubPaths(List<OdsayPathDto> path){
-        return path.stream()
-        .map(OdsayPathDto::getSubPath)
-        .toList();
-
-    }
 
     private boolean hasDayOverlap(List<Boolean> a, List<Boolean> b) {
         int size = Math.min(a.size(), b.size());
@@ -330,36 +312,12 @@ public class RoutineService {
     private void saveRouteXY(List<OdsayPathDto> path ,
                              Long userId) {
 
-        List<List<RouteXYDto>> stations =
-                path.stream()
-                        .map(p -> p.getSubPath().stream()
-                                .flatMap(sp -> {
-                                    String type = trafficType2Eng(sp.getTrafficType());
-
-                                    if (sp.getTrafficType() == 3) {
-                                        return Stream.of(new RouteXYDto(null, null, null, null, "walk"));
-                                    }
-
-                                    return Optional.ofNullable(sp.getPassStopList())
-                                            .map(pl -> pl.getStations())
-                                            .orElse(Collections.emptyList())
-                                            .stream()
-                                            .map(s -> new RouteXYDto(
-                                                    s.getStationName(),
-                                                    s.getX(),
-                                                    s.getY(),
-                                                    s.getArsID(),
-                                                    type
-                                            ));
-                                })
-                                .toList()
-                        )
-                        .toList();
-
+        List<List<RouteXYDto>> stations = odsayIOService.getRouteXY(path);
 
         IntStream.range(0, stations.size())
                 .forEach(i -> {
                     String key = "routine:route:xy:user:" + userId + ":" + i;
+
                     String json = mapper.writeValueAsString(stations.get(i));
                     redisTemplate.opsForValue().set(key, json);
                     System.out.println("saved " + key);
@@ -372,7 +330,7 @@ public class RoutineService {
             List<OdsayPathDto.Info> infos,
             Long userId
     ) {
-        List<List<RouteSectionDto>> detailRoutes = getDetailPaths(subPaths);
+        List<List<RouteSectionDto>> detailRoutes = odsayIOService.getDetailPaths(subPaths);
         IntStream.range(0, infos.size())
                 .forEach(i -> {
 
@@ -394,124 +352,7 @@ public class RoutineService {
                 });
     }
 
-    private List<List<RouteSectionDto>> getDetailPaths(
-            List<List<OdsayPathDto.SubPath>> subPaths) {
 
-        return subPaths.stream()
-                .map(p -> p.stream()
-                        .map(sp -> {
-
-                            String type = trafficType2Eng(sp.getTrafficType());
-
-                            return switch (type) {
-
-                                case "walk" ->
-                                        new WalkSectionDto(sp.getSectionTime());
-
-                                case "bus" -> new BusSectionDto(
-                                        sp.getSectionTime(),
-
-                                        sp.getLane() == null
-                                                ? List.of()
-                                                : sp.getLane().stream()
-                                                  .map(OdsayPathDto.SubPath.Lane::getBusNo)
-                                                  .toList(),
-
-                                        sp.getStartName(),
-                                        sp.getEndName(),
-                                        sp.getStationCount(),
-                                        extractStations(sp)
-                                );
-
-                                case "subway" -> new SubwaySectionDto(
-                                        sp.getSectionTime(),
-
-                                        sp.getLane() == null
-                                                ? List.of()
-                                                : sp.getLane().stream()
-                                                  .map(lane -> String.valueOf(lane.getSubwayCode()))
-                                                  .toList(),
-
-                                        sp.getStartName(),
-                                        sp.getEndName(),
-                                        sp.getStationCount(),
-                                        extractStations(sp),
-                                        sp.getWay()
-                                );
-
-                                default ->
-                                        throw new IllegalStateException("Unknown type: " + type);
-                            };
-                        })
-                        .toList()
-                )
-                .toList();
-    }
-
-    private List<String> extractStations(OdsayPathDto.SubPath sp) {
-        if (sp.getPassStopList() == null) return List.of();
-
-        return sp.getPassStopList().getStations().stream()
-                .map(OdsayPathDto.Station::getStationName)
-                .toList();
-    }
-    private String trafficType2Eng(int trafficType) {
-        // 1-지하철, 2-버스, 3-도보
-        if (trafficType == 2) {
-            return "bus";
-
-        } else if (trafficType == 1) {
-            return "subway";
-
-        } else {
-            return "walk";
-        }
-    }
-
-    private List<List<String>> getTrafficTypeNo(List<List<OdsayPathDto.SubPath>> subPaths) {
-
-        return subPaths.stream()
-                .map(p -> p.stream()
-                        .map(sp -> {
-
-                            // 1-지하철, 2-버스, 3-도보
-                            String trafficTypeEng = trafficType2Eng(sp.getTrafficType());
-                            String no;
-
-                            if (trafficTypeEng.equals("bus")) {
-                                no = ":" + sp.getLane()
-                                        .getFirst()
-                                        .getBusNo();
-                            } else if (trafficTypeEng.equals("subway")) {
-                                no = ":" + String.valueOf(
-                                        sp.getLane()
-                                                .getFirst()
-                                                .getSubwayCode()
-                                );
-                            } else {
-                                no = "";
-                            }
-                            return trafficTypeEng + no;
-
-                        })
-                        .toList()
-                )
-                .toList();
-    }
-
-    private OdsayXYDto getOdsayXy(Long originId, Long destinationId) {
-        UserAddressEntity origin = userAddressRepository.findById(originId)
-                .orElseThrow(AddressNotFoundException::new);
-        UserAddressEntity destination = userAddressRepository.findById(destinationId)
-                .orElseThrow(AddressNotFoundException::new);
-
-        OdsayXYDto xy = new OdsayXYDto();
-        xy.setSx(origin.getLng());
-        xy.setSy(origin.getLat());
-        xy.setEx(destination.getLng());
-        xy.setEy(destination.getLat());
-        return xy;
-    }
 
 
 }
