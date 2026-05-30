@@ -18,6 +18,7 @@ import java.util.List;
 @Setter
 @Entity
 @Table(
+        schema = "stats",
         name = "user_daily_stats"
 )
 @EntityListeners(AuditingEntityListener.class)
