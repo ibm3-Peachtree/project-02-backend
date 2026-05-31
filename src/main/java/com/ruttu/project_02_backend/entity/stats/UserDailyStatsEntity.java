@@ -1,6 +1,6 @@
 package com.ruttu.project_02_backend.entity.stats;
 
-import com.ruttu.project_02_backend.dto.routine.Odsay.RouteXYDto;
+import com.ruttu.project_02_backend.dto.routine.odsay.RouteXYDto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

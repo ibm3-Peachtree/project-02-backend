@@ -1,7 +1,7 @@
 package com.ruttu.project_02_backend.service.routine;
 
 import com.ruttu.project_02_backend.dto.routine.live.RoutineCompleteDto;
-import com.ruttu.project_02_backend.dto.routine.Odsay.*;
+import com.ruttu.project_02_backend.dto.routine.odsay.*;
 import com.ruttu.project_02_backend.dto.routine.live.*;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentLocationDto;
 import com.ruttu.project_02_backend.entity.stats.UserDailyStatsEntity;
@@ -192,8 +192,8 @@ public class LiveRouteService {
 
         return new CurrentSectionDto(
                 nearestIndex,
-                route.getPath().stream()
-                        .map(r->r.getNo().getFirst()).toList(),
+                routeXYList.stream()
+                        .map(RouteXYDto::getNo).toList(),
                 routeXYList
         );
     }
