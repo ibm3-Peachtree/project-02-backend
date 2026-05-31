@@ -94,8 +94,8 @@ public class LiveRouteService {
                         routine.getId(),
                         routeListXY.get(matchedIndex)
                 );
-                saveTodayRouteAtRedis(userId, liveRouteForReportDto);
-                saveTodayXYAtRedis(userId, routeXYForReportDto);
+                saveTodayMyRouteAtRedis(userId, liveRouteForReportDto);
+                saveTodayMyXYAtRedis(userId, routeXYForReportDto);
                 return liveRoute;
             } else {
                 System.out.println("일치하는 경로 없음");
@@ -108,8 +108,8 @@ public class LiveRouteService {
                         routine.getId(),
                         savedRouteXY
                 );
-                saveTodayRouteAtRedis(userId, liveRouteForReportDto);
-                saveTodayXYAtRedis(userId, routeXYForReportDto);
+                saveTodayMyRouteAtRedis(userId, liveRouteForReportDto);
+                saveTodayMyXYAtRedis(userId, routeXYForReportDto);
                 return savedRoute; // 일치 경로 없으면 저장된 경로 반환
             }
 
@@ -149,17 +149,26 @@ public class LiveRouteService {
                     routine.getId(),
                     routeListXY.getFirst()
             );
-            saveTodayRouteAtRedis(userId, liveRouteForReportDto);
-            saveTodayXYAtRedis(userId, routeXYForReportDto);
+            saveTodayRecoRouteAtRedis(userId, liveRouteForReportDto);
+            saveTodayRecoXYAtRedis(userId, routeXYForReportDto);
             return liveRoute;
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+    @Transactional(readOnly = true)
+    public CurrentSectionDto getMyCurrentSection(Long userId){
+        return getCurrentSection(userId, getTodayMyRouteKey(userId), getTodayMyXYKey(userId));
+    }
 
     @Transactional(readOnly = true)
-    public CurrentSectionDto getCurrentSection(Long userId){
+    public CurrentSectionDto getRecoCurrentSection(Long userId){
+        return getCurrentSection(userId, getTodayRecoRouteKey(userId), getTodayRecoXYKey(userId));
+    }
+
+
+    private CurrentSectionDto getCurrentSection(Long userId, String routeKey, String xyKey){
         CurrentXYDto xy = routineService.readJson(
                 (String) redisTemplate.opsForValue().get("location:user:" + userId),
                 CurrentXYDto.class
@@ -168,11 +177,11 @@ public class LiveRouteService {
         if (routine == null) return null; // null 체크 추가
         Long routineId = routine.getId();
         LiveRouteForReportDto route = routineService.readJson(
-                (String) redisTemplate.opsForValue().get(getTodayRouteKey(userId)),
+                (String) redisTemplate.opsForValue().get(routeKey),
                 new TypeReference<LiveRouteForReportDto>() {}
         );
         RouteXYForReportDto routeXY = routineService.readJson(
-                (String) redisTemplate.opsForValue().get(getTodayXYKey(userId)),
+                (String) redisTemplate.opsForValue().get(xyKey),
                 new TypeReference<RouteXYForReportDto>() {}
         );
 
@@ -199,10 +208,24 @@ public class LiveRouteService {
     }
 
     @Transactional
-    public void completed(Long userId, RoutineCompleteDto routineCompleteDto){
+    public void myRoutecompleted(Long userId, RoutineCompleteDto routineCompleteDto){
         // redis 데이터 불러오기
-        String routeKey = getTodayRouteKey(userId);
-        String xyKey = getTodayXYKey(userId);
+        String myRouteKey = getTodayMyRouteKey(userId);
+        String myXyKey = getTodayMyXYKey(userId);
+
+        saveDB(myRouteKey, myXyKey, userId, routineCompleteDto);
+    }
+
+    @Transactional
+    public void recoRoutecompleted(Long userId, RoutineCompleteDto routineCompleteDto){
+        // redis 데이터 불러오기
+        String recoRouteKey = getTodayRecoRouteKey(userId);
+        String recoXyKey = getTodayRecoXYKey(userId);
+
+        saveDB(recoRouteKey, recoXyKey, userId, routineCompleteDto);
+    }
+
+    private void saveDB(String routeKey, String xyKey, Long userId, RoutineCompleteDto routineCompleteDto) {
         LiveRouteForReportDto todayRoute = routineService.readJson(
                 (String) redisTemplate.opsForValue().get(routeKey),
                 new TypeReference<LiveRouteForReportDto>() {}
@@ -265,7 +288,6 @@ public class LiveRouteService {
         redisTemplate.delete(routeKey);
         redisTemplate.delete(xyKey);
     }
-
     private boolean isNegativeDifference(LocalTime targetArrivalTime,
                                         LocalTime arrivalTime) {
         long seconds = Duration.between(arrivalTime, targetArrivalTime).getSeconds();
@@ -284,21 +306,36 @@ public class LiveRouteService {
     private String getLocationKey(Long userId){
         return "location:user:" + userId;
     }
-    private String getTodayRouteKey(Long userId){
-        return "routine:live:route:user:" + userId;
+    private String getTodayMyRouteKey(Long userId){
+        return "routine:live:my:route:user:" + userId;
     }
-    private String getTodayXYKey(Long userId){
-        return "routine:live:xy:user:" + userId;
+    private String getTodayRecoRouteKey(Long userId){
+        return "routine:live:reco:route:user:" + userId;
+    }
+    private String getTodayMyXYKey(Long userId){
+        return "routine:live:my:xy:user:" + userId;
+    }
+    private String getTodayRecoXYKey(Long userId){
+        return "routine:live:reco:xy:user:" + userId;
     }
 
-    private void saveTodayRouteAtRedis(Long userId, LiveRouteForReportDto liveRouteForReportDto){
-        String key = getTodayRouteKey(userId);
+    private void saveTodayMyRouteAtRedis(Long userId, LiveRouteForReportDto liveRouteForReportDto){
+        String key = getTodayMyRouteKey(userId);
         String json = mapper.writeValueAsString(liveRouteForReportDto);
         redisTemplate.opsForValue().set(key, json);
     }
-
-    private void saveTodayXYAtRedis(Long userId, RouteXYForReportDto routeXYForReportDto){
-        String key = getTodayXYKey(userId);
+    private void saveTodayRecoRouteAtRedis(Long userId, LiveRouteForReportDto liveRouteForReportDto){
+        String key = getTodayRecoRouteKey(userId);
+        String json = mapper.writeValueAsString(liveRouteForReportDto);
+        redisTemplate.opsForValue().set(key, json);
+    }
+    private void saveTodayMyXYAtRedis(Long userId, RouteXYForReportDto routeXYForReportDto){
+        String key = getTodayMyXYKey(userId);
+        String json = mapper.writeValueAsString(routeXYForReportDto);
+        redisTemplate.opsForValue().set(key, json);
+    }
+    private void saveTodayRecoXYAtRedis(Long userId, RouteXYForReportDto routeXYForReportDto){
+        String key = getTodayRecoXYKey(userId);
         String json = mapper.writeValueAsString(routeXYForReportDto);
         redisTemplate.opsForValue().set(key, json);
     }
