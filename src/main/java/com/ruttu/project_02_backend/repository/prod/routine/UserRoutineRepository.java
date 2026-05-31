@@ -16,5 +16,7 @@ public interface UserRoutineRepository extends JpaRepository<UserRoutineEntity, 
     );
 
     List<UserRoutineEntity>  findAllByUserId(Long userId);
+
+    void deleteByUserIdIn(List<Long> userIds);
 }
 

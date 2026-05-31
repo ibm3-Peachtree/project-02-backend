@@ -22,4 +22,11 @@ public class AuthGlobalExceptionHandler{
         problemDetail.setDetail(missingTokenException.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
     }
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ProblemDetail> unauthorizedHandler(UnauthorizedException unauthorizedException){
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        problemDetail.setTitle("탈퇴한 사용자");
+        problemDetail.setDetail(unauthorizedException.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
+    }
 }
