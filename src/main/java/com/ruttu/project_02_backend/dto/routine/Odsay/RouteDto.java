@@ -19,4 +19,5 @@ public class RouteDto {
     private String startName;
     private String endName;
     private List<RouteSectionDto> path;
+
 }

@@ -167,7 +167,10 @@ public class LiveRouteService {
         UserRoutineEntity routine = getTodayRoutine(userId);
         if (routine == null) return null; // null 체크 추가
         Long routineId = routine.getId();
-
+        LiveRouteForReportDto route = routineService.readJson(
+                (String) redisTemplate.opsForValue().get(getTodayRouteKey(userId)),
+                new TypeReference<LiveRouteForReportDto>() {}
+        );
         RouteXYForReportDto routeXY = routineService.readJson(
                 (String) redisTemplate.opsForValue().get(getTodayXYKey(userId)),
                 new TypeReference<RouteXYForReportDto>() {}
@@ -189,7 +192,8 @@ public class LiveRouteService {
 
         return new CurrentSectionDto(
                 nearestIndex,
-                routeXYList.stream().map(RouteXYDto::getType).toList(),
+                route.getPath().stream()
+                        .map(r->r.getNo().getFirst()).toList(),
                 routeXYList
         );
     }

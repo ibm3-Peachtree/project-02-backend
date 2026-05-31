@@ -44,7 +44,7 @@ public class OdsayPathDto {
     @AllArgsConstructor
     public static class Lane{
         private String busNo;
-        private Integer subwayCode;
+        private String Name;
     }
 
         private String startName;
