@@ -124,7 +124,7 @@ public class LiveRouteController {
     }
 
     @Operation(
-            summary = "실시간 이동 구간 조회",
+            summary = "실시간 이동 구간 조회(나의 경로)",
             description = "현재 위치한 경로 구간 조회"
     )
     @ApiResponses({
@@ -146,16 +146,47 @@ public class LiveRouteController {
             )
     }
     )
-    @GetMapping("/location")
-    public ResponseEntity<CurrentSectionDto> getCurrentSection(
+    @GetMapping("/location/my")
+    public ResponseEntity<CurrentSectionDto> getMyCurrentSection(
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        return ResponseEntity.ok(liveRouteService.getCurrentSection(user.getUserId()));
+        return ResponseEntity.ok(liveRouteService.getMyCurrentSection(user.getUserId()));
     }
 
     @Operation(
-            summary = "실시간 경로 안내 종료",
+            summary = "실시간 이동 구간 조회(추천 경로)",
+            description = "현재 위치한 경로 구간 조회"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "구간 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = CurrentSectionDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "구간 조회 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            )
+    }
+    )
+    @GetMapping("/location/reco")
+    public ResponseEntity<CurrentSectionDto> getRecoCurrentSection(
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        return ResponseEntity.ok(liveRouteService.getRecoCurrentSection(user.getUserId()));
+    }
+
+    @Operation(
+            summary = "실시간 경로 안내 종료(나의 경로)",
             description = "실시간 경로 안내 종료"
     )
     @ApiResponses({
@@ -177,13 +208,45 @@ public class LiveRouteController {
             )
     }
     )
-    @PostMapping("/complete")
-    public ResponseEntity<Void> completed(
+    @PostMapping("/complete/my")
+    public ResponseEntity<Void> myRoutecompleted(
             @RequestBody RoutineCompleteDto routineCompleteDto,
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        liveRouteService.completed(user.getUserId(),routineCompleteDto);
+        liveRouteService.myRoutecompleted(user.getUserId(),routineCompleteDto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+    @Operation(
+            summary = "실시간 경로 안내 종료(추천 경로)",
+            description = "실시간 경로 안내 종료"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "저장 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "저장 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            )
+    }
+    )
+    @PostMapping("/complete/reco")
+    public ResponseEntity<Void> recoRoutecompleted(
+            @RequestBody RoutineCompleteDto routineCompleteDto,
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        liveRouteService.recoRoutecompleted(user.getUserId(),routineCompleteDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }
