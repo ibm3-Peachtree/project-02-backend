@@ -172,7 +172,8 @@ public class OdsayIOService {
                             return switch (type) {
 
                                 case "walk" ->
-                                        new WalkSectionDto(sp.getSectionTime());
+                                        new WalkSectionDto(sp.getSectionTime(),
+                                        null);
 
                                 case "bus" -> new BusSectionDto(
                                         sp.getSectionTime(),
@@ -195,7 +196,7 @@ public class OdsayIOService {
                                         sp.getLane() == null
                                                 ? List.of()
                                                 : sp.getLane().stream()
-                                                  .map(lane -> String.valueOf(lane.getSubwayCode()))
+                                                  .map(lane -> String.valueOf(lane.getName()))
                                                   .toList(),
 
                                         sp.getStartName(),
@@ -262,7 +263,7 @@ public class OdsayIOService {
                                 no = ":" + String.valueOf(
                                         sp.getLane()
                                                 .getFirst()
-                                                .getSubwayCode()
+                                                .getName()
                                 );
                             } else {
                                 no = "";
