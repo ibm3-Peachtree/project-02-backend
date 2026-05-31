@@ -1,7 +1,7 @@
 package com.ruttu.project_02_backend.service.routine;
 
-import com.ruttu.project_02_backend.dto.routine.Odsay.*;
-import com.ruttu.project_02_backend.dto.routine.Odsay.RouteSectionDto;
+import com.ruttu.project_02_backend.dto.routine.odsay.*;
+import com.ruttu.project_02_backend.dto.routine.odsay.RouteSectionDto;
 import com.ruttu.project_02_backend.dto.routine.routine.RouteListDto;
 import com.ruttu.project_02_backend.dto.routine.routine.RoutineDetailDto;
 import com.ruttu.project_02_backend.dto.routine.routine.RoutineDto;

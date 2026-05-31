@@ -1,4 +1,4 @@
-package com.ruttu.project_02_backend.dto.routine.Odsay;
+package com.ruttu.project_02_backend.dto.routine.odsay;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -44,7 +44,7 @@ public class OdsayPathDto {
     @AllArgsConstructor
     public static class Lane{
         private String busNo;
-        private String Name;
+        private String name;
     }
 
         private String startName;

@@ -1,4 +1,4 @@
-package com.ruttu.project_02_backend.dto.routine.Odsay;
+package com.ruttu.project_02_backend.dto.routine.odsay;
 
 
 import lombok.*;
@@ -12,5 +12,6 @@ public class RouteXYDto {
     private Double y;
     private String arsID;
     private String type; // walk, bus, subway
+    private String no;
 
 }

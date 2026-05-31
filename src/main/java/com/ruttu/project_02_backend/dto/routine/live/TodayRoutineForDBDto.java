@@ -1,15 +1,12 @@
 package com.ruttu.project_02_backend.dto.routine.live;
 
-import com.ruttu.project_02_backend.dto.routine.Odsay.RouteDto;
-import com.ruttu.project_02_backend.dto.routine.Odsay.RouteSectionDto;
-import com.ruttu.project_02_backend.dto.routine.Odsay.RouteXYDto;
+import com.ruttu.project_02_backend.dto.routine.odsay.RouteXYDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
