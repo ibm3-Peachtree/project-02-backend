@@ -1,8 +1,10 @@
-package com.ruttu.project_02_backend.dto.routine.Odsay;
+package com.ruttu.project_02_backend.dto.routine.odsay;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+import java.util.List;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -19,4 +21,6 @@ public interface RouteSectionDto {
     String getType();
 
     int getSectionTime();
+
+    List<String> getNo();
 }

@@ -1,7 +1,7 @@
 package com.ruttu.project_02_backend.controller.routine;
 
 import com.ruttu.project_02_backend.config.CustomUserDetails;
-import com.ruttu.project_02_backend.dto.routine.Odsay.RouteDto;
+import com.ruttu.project_02_backend.dto.routine.odsay.RouteDto;
 import com.ruttu.project_02_backend.dto.routine.routine.RouteListDto;
 import com.ruttu.project_02_backend.dto.routine.routine.RoutineDetailDto;
 import com.ruttu.project_02_backend.dto.routine.routine.RoutineDto;

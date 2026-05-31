@@ -1,7 +1,7 @@
 package com.ruttu.project_02_backend.service.routine;
 
 import com.ruttu.project_02_backend.dto.routine.live.RoutineCompleteDto;
-import com.ruttu.project_02_backend.dto.routine.Odsay.*;
+import com.ruttu.project_02_backend.dto.routine.odsay.*;
 import com.ruttu.project_02_backend.dto.routine.live.*;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentLocationDto;
 import com.ruttu.project_02_backend.entity.stats.UserDailyStatsEntity;
@@ -167,7 +167,10 @@ public class LiveRouteService {
         UserRoutineEntity routine = getTodayRoutine(userId);
         if (routine == null) return null; // null 체크 추가
         Long routineId = routine.getId();
-
+        LiveRouteForReportDto route = routineService.readJson(
+                (String) redisTemplate.opsForValue().get(getTodayRouteKey(userId)),
+                new TypeReference<LiveRouteForReportDto>() {}
+        );
         RouteXYForReportDto routeXY = routineService.readJson(
                 (String) redisTemplate.opsForValue().get(getTodayXYKey(userId)),
                 new TypeReference<RouteXYForReportDto>() {}
@@ -189,7 +192,8 @@ public class LiveRouteService {
 
         return new CurrentSectionDto(
                 nearestIndex,
-                routeXYList.stream().map(RouteXYDto::getType).toList(),
+                routeXYList.stream()
+                        .map(RouteXYDto::getNo).toList(),
                 routeXYList
         );
     }

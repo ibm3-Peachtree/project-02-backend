@@ -1,4 +1,4 @@
-package com.ruttu.project_02_backend.dto.routine.Odsay;
+package com.ruttu.project_02_backend.dto.routine.odsay;
 
 import lombok.Getter;
 import lombok.Setter;

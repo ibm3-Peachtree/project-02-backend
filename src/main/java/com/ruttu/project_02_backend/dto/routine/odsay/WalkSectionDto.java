@@ -1,8 +1,10 @@
-package com.ruttu.project_02_backend.dto.routine.Odsay;
+package com.ruttu.project_02_backend.dto.routine.odsay;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -10,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class WalkSectionDto implements RouteSectionDto {
 
     private int sectionTime;
+    private List<String> no;
 
     @Override
     public String getType() {

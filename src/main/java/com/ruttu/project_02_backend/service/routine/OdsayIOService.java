@@ -1,7 +1,7 @@
 package com.ruttu.project_02_backend.service.routine;
 
-import com.ruttu.project_02_backend.dto.routine.Odsay.*;
-import com.ruttu.project_02_backend.dto.routine.Odsay.RouteSectionDto;
+import com.ruttu.project_02_backend.dto.routine.odsay.*;
+import com.ruttu.project_02_backend.dto.routine.odsay.RouteSectionDto;
 import com.ruttu.project_02_backend.entity.prod.user.UserAddressEntity;
 import com.ruttu.project_02_backend.exception.user.AddressNotFoundException;
 import com.ruttu.project_02_backend.repository.prod.user.UserAddressRepository;
@@ -131,33 +131,37 @@ public class OdsayIOService {
         return xy;
     }
 
-    public List<List<RouteXYDto>> getRouteXY(List<OdsayPathDto> path){
+    public List<List<RouteXYDto>> getRouteXY(List<OdsayPathDto> path) {
         return path.stream()
-                        .map(p -> p.getSubPath().stream()
-                                .flatMap(sp -> {
-                                    String type = trafficType2Eng(sp.getTrafficType());
+                .map(p -> {
+                    List<String> no = getTrafficTypeNo(Collections.singletonList(p.getSubPath())).getFirst();
+                    List<OdsayPathDto.SubPath> subPaths = p.getSubPath();
+                    return IntStream.range(0, subPaths.size())
+                            .boxed()
+                            .flatMap(i -> {
+                                String type = trafficType2Eng(subPaths.get(i).getTrafficType());
 
-                                    if (sp.getTrafficType() == 3) {
-                                        return Stream.of(new RouteXYDto(null, null, null, null, "walk"));
-                                    }
+                                if (type.equals("walk")) {
+                                    return Stream.of(new RouteXYDto(null, null, null, null, "walk", no.get(i)));
+                                }
 
-                                    return Optional.ofNullable(sp.getPassStopList())
-                                            .map(pl -> pl.getStations())
-                                            .orElse(Collections.emptyList())
-                                            .stream()
-                                            .map(s -> new RouteXYDto(
-                                                    s.getStationName(),
-                                                    s.getX(),
-                                                    s.getY(),
-                                                    s.getArsID(),
-                                                    type
-                                            ));
-                                })
-                                .toList()
-                        )
-                        .toList();
+                                return Optional.ofNullable(subPaths.get(i).getPassStopList())
+                                        .map(pl -> pl.getStations())
+                                        .orElse(Collections.emptyList())
+                                        .stream()
+                                        .map(s -> new RouteXYDto(
+                                                s.getStationName(),
+                                                s.getX(),
+                                                s.getY(),
+                                                s.getArsID(),
+                                                type,
+                                                no.get(i)
+                                        ));
+                            })
+                            .toList();
+                })
+                .toList();
     }
-
 
 
     public List<List<RouteSectionDto>> getDetailPaths(
@@ -172,7 +176,8 @@ public class OdsayIOService {
                             return switch (type) {
 
                                 case "walk" ->
-                                        new WalkSectionDto(sp.getSectionTime());
+                                        new WalkSectionDto(sp.getSectionTime(),
+                                        List.of(""));
 
                                 case "bus" -> new BusSectionDto(
                                         sp.getSectionTime(),
@@ -195,7 +200,7 @@ public class OdsayIOService {
                                         sp.getLane() == null
                                                 ? List.of()
                                                 : sp.getLane().stream()
-                                                  .map(lane -> String.valueOf(lane.getSubwayCode()))
+                                                  .map(lane -> String.valueOf(lane.getName()))
                                                   .toList(),
 
                                         sp.getStartName(),
@@ -262,7 +267,7 @@ public class OdsayIOService {
                                 no = ":" + String.valueOf(
                                         sp.getLane()
                                                 .getFirst()
-                                                .getSubwayCode()
+                                                .getName()
                                 );
                             } else {
                                 no = "";

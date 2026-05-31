@@ -1,4 +1,4 @@
-package com.ruttu.project_02_backend.dto.routine.Odsay;
+package com.ruttu.project_02_backend.dto.routine.odsay;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,4 +19,5 @@ public class RouteDto {
     private String startName;
     private String endName;
     private List<RouteSectionDto> path;
+
 }
