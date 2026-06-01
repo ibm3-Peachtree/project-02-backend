@@ -7,7 +7,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
-import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -39,28 +38,40 @@ public class UserEntity {
     @Column(name = "status")
     private String status;
 
-    @ColumnDefault("1")
-    @Column(name = "is_reco_departure_noti_enabled")
-    private Boolean isRecoDepartureNotiEnabled;
-
-    @Column(name = "brief_notification_time")
-    private LocalTime briefNotificationTime;
-
+    // 🚍 출발 알림
+    @Column(name = "departure_alert", nullable = false)
     @ColumnDefault("0")
-    @Column(name = "brief_notification_day_offset")
-    private Integer briefNotificationDayOffset;
+    private Boolean departureAlert;
 
-    @ColumnDefault("1")
-    @Column(name = "is_brief_notification_enabled")
-    private Boolean isBriefNotificationEnabled;
+    @Column(name = "departure_minutes")
+    private String departureMinutes;
 
-    @ColumnDefault("5")
-    @Column(name = "transit_notification_min")
-    private Integer transitNotificationMin;
+    // 🚇 하차 알림
+    @Column(name = "alighting_alert", nullable = false)
+    @ColumnDefault("false")
+    private Boolean alightingAlert;
 
-    @ColumnDefault("1")
-    @Column(name = "allowed_tts")
-    private Boolean allowedTts;
+    @Column(name = "alighting_mode")
+    private String alightingMode;
+
+    @Column(name = "alighting_stops")
+    private String alightingStops;
+
+    // 🔊 TTS
+    @Column(name = "tts_enabled", nullable = false)
+    @ColumnDefault("false")
+    private Boolean ttsEnabled;
+
+    @Column(name = "tts_mode")
+    private String ttsMode;
+
+    // 📋 브리핑
+    @Column(name = "briefing_alert", nullable = false)
+    @ColumnDefault("false")
+    private Boolean briefingAlert;
+
+    @Column(name = "morning_time")
+    private String morningTime;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)
