@@ -20,6 +20,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 @Service
@@ -43,12 +44,17 @@ public class RoutineService {
             throw new DuplicateRoutineNameException();
         }
 
-        boolean overlap =  user.stream()
+        boolean overlap = user.stream()
                 .anyMatch(s ->
-                        hasDayOverlap(
-                                fromBitMask(s.getPreferredDowMask(),7), // 기존 DB
-                                routineDto.getDow()                   // 요청
+                        Objects.equals(
+                                s.getTargetArrivalTime(),
+                                routineDto.getTargetArrivalTime()
                         )
+                                &&
+                                hasDayOverlap(
+                                        fromBitMask(s.getPreferredDowMask(), 7),
+                                        routineDto.getDow()
+                                )
                 );
 
         // 동시간대 루틴 존재여부 확인
@@ -99,6 +105,8 @@ public class RoutineService {
                                 fromBitMask(r.getPreferredDowMask(), 7),
                                 r.getTargetArrivalTime(),
                                 r.getRecoDepartureTime(),
+                                r.getSpareTime(),
+                                r.isExcludeHoliday(),
                                 r.getEstimatedDurationMin()
                         )
                 )
@@ -120,6 +128,8 @@ public class RoutineService {
                                 r.getTargetArrivalTime(),
                                 r.getRecoDepartureTime(),
                                 r.getEstimatedDurationMin(),
+                                r.getSpareTime(),
+                                r.isExcludeHoliday(),
                                 r.getPreferredRoute()
                         )
                 )
@@ -172,7 +182,7 @@ public class RoutineService {
                                 );
 
                                 // redis에 저장
-                                String key = "routine:route:summary:user:" + userId + ":" + i;
+                                String key = routeSummaryKey(userId, i);
 
                                 String json = mapper.writeValueAsString(resRouteList);
                                 redisTemplate.opsForValue().set(key, json);
@@ -190,8 +200,6 @@ public class RoutineService {
 
     }
 
-
-
     private void saveUserRoutineEntity(UserRoutineEntity r, RoutineDto dto, Long userId){
         long dowMask = toBitMask(dto.getDow());
 
@@ -200,7 +208,8 @@ public class RoutineService {
         List<RouteXYDto> xy = getXYList(recoId, userId); // 추천 경로 xy 목록
 
         int estimatedTime = full.getTotalTime(); // 예상 시간
-        LocalTime departureTime = getDepartureTime(  // 추천 출발 시간
+        LocalTime departureTime = getDepartureTime(
+                dto.getSpareTime(),// 추천 출발 시간
                 dto.getTargetArrivalTime(),
                 estimatedTime
         );
@@ -214,6 +223,8 @@ public class RoutineService {
         r.setPreferredDowMask(dowMask);
         r.setPreferredRoute(full);
         r.setPreferredRouteXy(xy);
+        r.setExcludeHoliday(dto.isExcludeHoliday());
+        r.setSpareTime(dto.getSpareTime());
         r.setRecoDepartureTime(departureTime);
         r.setEstimatedDurationMin(estimatedTime);
         userRoutineRepository.save(r);
@@ -237,6 +248,10 @@ public class RoutineService {
     }
     private static String routeFullKey(Long userId, int recoId) {
         return "routine:route:full:user:" + userId + ":" + recoId;
+    }
+
+    private static String routeSummaryKey(Long userId, int recoId) {
+        return "routine:route:summary:user:" + userId + ":" + recoId;
     }
     public  <T> T readJson(String raw, Class<T> type) {
         if (raw == null || raw.isBlank()) {
@@ -273,10 +288,10 @@ public class RoutineService {
         }
         return false;
     }
-    private LocalTime getDepartureTime(LocalTime targetArrivalTime, int estimatedDurationMin) {
+    private LocalTime getDepartureTime(int spareTime, LocalTime targetArrivalTime, int estimatedDurationMin) {
         return targetArrivalTime
                 .minusMinutes(estimatedDurationMin)
-                .minusMinutes(15);
+                .minusMinutes(spareTime);
     }
 
     private long toBitMask(List<Boolean> list) {
@@ -316,7 +331,7 @@ public class RoutineService {
 
         IntStream.range(0, stations.size())
                 .forEach(i -> {
-                    String key = "routine:route:xy:user:" + userId + ":" + i;
+                    String key = routeXyKey(userId, i);
 
                     String json = mapper.writeValueAsString(stations.get(i));
                     redisTemplate.opsForValue().set(key, json);
@@ -344,7 +359,7 @@ public class RoutineService {
                             detailRoutes.get(i)
                     );
 
-                    String key = "routine:route:full:user:" + userId + ":" + i;
+                    String key = routeFullKey(userId, i);
                     String json = mapper.writeValueAsString(routeDto);
                     redisTemplate.opsForValue().set(key, json);
                     System.out.println("saved " + key);

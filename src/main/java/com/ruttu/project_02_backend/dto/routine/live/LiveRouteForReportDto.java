@@ -1,5 +1,6 @@
 package com.ruttu.project_02_backend.dto.routine.live;
 
+import com.ruttu.project_02_backend.dto.routine.odsay.RouteDto;
 import com.ruttu.project_02_backend.dto.routine.odsay.RouteSectionDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

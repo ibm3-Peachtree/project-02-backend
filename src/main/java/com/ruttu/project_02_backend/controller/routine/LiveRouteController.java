@@ -5,6 +5,8 @@ import com.ruttu.project_02_backend.dto.routine.live.RoutineCompleteDto;
 import com.ruttu.project_02_backend.dto.routine.live.CurrentSectionDto;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentLocationDto;
 import com.ruttu.project_02_backend.dto.routine.live.LiveRouteDto;
+import com.ruttu.project_02_backend.dto.routine.odsay.RouteDto;
+import com.ruttu.project_02_backend.dto.routine.routine.RouteListDto;
 import com.ruttu.project_02_backend.service.routine.LiveRouteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,6 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Live Routine API", description = "실시간 루틴 관리 API")
 @RestController
@@ -60,6 +64,8 @@ public class LiveRouteController {
     }
 
 
+
+
     @Operation(
             summary = "나의 경로 조회",
             description = "실시간 내 경로 조회"
@@ -92,8 +98,10 @@ public class LiveRouteController {
     }
 
 
+
+
     @Operation(
-            summary = "추천 경로 조회",
+            summary = "추천 경로 목록 조회",
             description = "실시간 추천 경로 조회"
     )
     @ApiResponses({
@@ -116,12 +124,49 @@ public class LiveRouteController {
     }
     )
     @GetMapping("/reco")
-    public ResponseEntity<LiveRouteDto> getRecommendedRoute(
+    public ResponseEntity<List<RouteListDto>> getRecommendedRoute(
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
         return ResponseEntity.ok(liveRouteService.getRecommendedRoute(user.getUserId()));
     }
+
+
+
+    @Operation(
+            summary = "추천 경로 상세 조회",
+            description = "추천 경로 상세 조회"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "경로 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LiveRouteDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "경로 조회 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            )
+    }
+    )
+    @GetMapping("/reco/{recoId}")
+    public ResponseEntity<RouteDto> getRecommendedRouteDetail(
+            @PathVariable int recoId,
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        return ResponseEntity.ok(liveRouteService.getRecommendedRouteDetail(user.getUserId(), recoId));
+    }
+
+
+
 
     @Operation(
             summary = "실시간 이동 구간 조회(나의 경로)",
@@ -154,6 +199,44 @@ public class LiveRouteController {
         return ResponseEntity.ok(liveRouteService.getMyCurrentSection(user.getUserId()));
     }
 
+
+
+
+    @Operation(
+            summary = "추천 경로 저장",
+            description = "실시간 추천 경로 Redis에 저장(이 경로로 변경 클릭 시)"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "경로 저장 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "저장 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            )
+    }
+    )
+    @PostMapping("/reco/{recoId}")
+    public ResponseEntity<Void> saveRecommendedRoute(
+            @PathVariable int recoId,
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        liveRouteService.saveRecommendedRoute(user.getUserId(), recoId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+
+
     @Operation(
             summary = "실시간 이동 구간 조회(추천 경로)",
             description = "현재 위치한 경로 구간 조회"
@@ -184,6 +267,9 @@ public class LiveRouteController {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
         return ResponseEntity.ok(liveRouteService.getRecoCurrentSection(user.getUserId()));
     }
+
+
+
 
     @Operation(
             summary = "실시간 경로 안내 종료(나의 경로)",
@@ -217,6 +303,11 @@ public class LiveRouteController {
         liveRouteService.myRoutecompleted(user.getUserId(),routineCompleteDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+
+
+
+
     @Operation(
             summary = "실시간 경로 안내 종료(추천 경로)",
             description = "실시간 경로 안내 종료"

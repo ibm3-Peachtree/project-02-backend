@@ -19,5 +19,7 @@ public class RoutineDto {
     private String origin;
     private String destinationAlias;
     private String destination;
+    private int spareTime;
+    private boolean excludeHoliday;
     private int recoId;
 }

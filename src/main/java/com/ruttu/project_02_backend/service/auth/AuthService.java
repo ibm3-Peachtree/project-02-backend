@@ -12,14 +12,17 @@ import com.ruttu.project_02_backend.entity.prod.auth.TokenMngtEntity;
 import com.ruttu.project_02_backend.entity.prod.user.UserEntity;
 import com.ruttu.project_02_backend.exception.auth.InvalidGoogleTokenException;
 import com.ruttu.project_02_backend.exception.auth.MissingTokenException;
+import com.ruttu.project_02_backend.exception.auth.UnauthorizedException;
 import com.ruttu.project_02_backend.repository.prod.auth.TokenMngtRepository;
 import com.ruttu.project_02_backend.repository.prod.user.UserRepository;
 import com.ruttu.project_02_backend.util.RefreshTokenHashUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 
@@ -27,6 +30,7 @@ import static com.ruttu.project_02_backend.util.RefreshTokenHashUtil.hash;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
     @Value("${google.client-id}")
     private String googleClientId;
@@ -71,6 +75,20 @@ public class AuthService {
                                     nickname
                             )
                     );
+            if ("WITHDRAWN".equals(userEntity.getStatus())) {
+
+                Instant limit = Instant.now().minus(Duration.ofDays(30));
+
+                if (userEntity.getWithdrawnAt() != null &&
+                        userEntity.getWithdrawnAt().isAfter(limit)) {
+
+                    return LoginResponseDto.builder()
+                            .status("DORMANT")
+                            .build();
+                }
+
+                throw new UnauthorizedException("탈퇴된 계정입니다");
+            }
             //JWT 발급
             String accessToken =
                     jwtUtil.generateAccessToken(userEntity.getId(), userEntity.getRole());
@@ -92,13 +110,14 @@ public class AuthService {
             tokenMngtRepository.save(token);
 
             // 이 dto 형식으로 반환
-            return new LoginResponseDto(
-                    accessToken,
-                    refreshToken,
-                    userEntity.getId(),
-                    email,
-                    nickname
-            );
+            return LoginResponseDto.builder()
+                    .status("ACTIVE")
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .userId(userEntity.getId())
+                    .email(email)
+                    .nickname(userEntity.getNickname())
+                    .build();
         }catch(Exception e){
             throw new RuntimeException("로그인 실패");
         }
@@ -128,6 +147,7 @@ public class AuthService {
 
         UserEntity userEntity = userRepository.findById(userId)
                 .orElseThrow();
+
 
         return new CustomUserDetails(
                 userEntity.getId(),
@@ -178,12 +198,26 @@ public class AuthService {
         String newAccessToken =
                 jwtUtil.generateAccessToken(user.getId(), user.getRole());
 
-        return new LoginResponseDto(
-                newAccessToken,
-                refreshToken,
-                user.getId(),
-                user.getEmail(),
-                user.getNickname()
-        );
+        return LoginResponseDto.builder()
+                .status("ACTIVE")
+                .accessToken(newAccessToken)
+                .refreshToken(refreshToken)
+                .userId(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .build();
+    }
+
+    public void restoreUser(Long userId) {
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow();
+
+        user.setStatus("ACTIVE");
+        user.setWithdrawnAt(null);
+
+        userRepository.save(user);
+        System.out.println(
+                "[RESTORE] userId=" + user.getId() + " -> ACTIVE");
     }
 }
