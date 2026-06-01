@@ -62,4 +62,16 @@ public class AuthController {
         LoginResponseDto response = authService.refresh(request.getRefreshToken());
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/restore")
+    @Operation(
+            summary = "휴먼 계정 복구",
+            description = "휴먼 계정 복구"
+    )
+    public ResponseEntity<Void> restoreUser(@RequestBody LoginResponseDto request) {
+
+        authService.restoreUser(request.getUserId());
+
+        return ResponseEntity.ok().build();
+    }
 }
