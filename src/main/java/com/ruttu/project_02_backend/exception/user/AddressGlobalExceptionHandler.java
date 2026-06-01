@@ -22,4 +22,11 @@ public class AddressGlobalExceptionHandler {
         problemDetail.setDetail(loginRequiredException.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
     }
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ProblemDetail> userNotFoundHandler(UserNotFoundException userNotFoundException){
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problemDetail.setTitle("사용자 없음");
+        problemDetail.setDetail(userNotFoundException.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
+    }
 }

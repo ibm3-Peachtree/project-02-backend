@@ -12,6 +12,7 @@ import com.ruttu.project_02_backend.entity.prod.auth.TokenMngtEntity;
 import com.ruttu.project_02_backend.entity.prod.user.UserEntity;
 import com.ruttu.project_02_backend.exception.auth.InvalidGoogleTokenException;
 import com.ruttu.project_02_backend.exception.auth.MissingTokenException;
+import com.ruttu.project_02_backend.exception.auth.UnauthorizedException;
 import com.ruttu.project_02_backend.repository.prod.auth.TokenMngtRepository;
 import com.ruttu.project_02_backend.repository.prod.user.UserRepository;
 import com.ruttu.project_02_backend.util.RefreshTokenHashUtil;
@@ -71,6 +72,12 @@ public class AuthService {
                                     nickname
                             )
                     );
+            if ("WITHDRAWN".equals(userEntity.getStatus())) {
+                userEntity.setStatus("ACTIVE");
+                userEntity.setWithdrawnAt(null);
+
+                userRepository.save(userEntity);
+            }
             //JWT 발급
             String accessToken =
                     jwtUtil.generateAccessToken(userEntity.getId(), userEntity.getRole());
@@ -97,7 +104,7 @@ public class AuthService {
                     refreshToken,
                     userEntity.getId(),
                     email,
-                    nickname
+                    userEntity.getNickname()
             );
         }catch(Exception e){
             throw new RuntimeException("로그인 실패");
@@ -128,6 +135,10 @@ public class AuthService {
 
         UserEntity userEntity = userRepository.findById(userId)
                 .orElseThrow();
+
+        if ("WITHDRAWN".equals(userEntity.getStatus())) {
+            throw new UnauthorizedException("탈퇴한 사용자 입니다");
+        }
 
         return new CustomUserDetails(
                 userEntity.getId(),
