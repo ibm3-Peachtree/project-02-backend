@@ -38,7 +38,7 @@ public class UserCleanupScheduler {
     private final PostReportRepository postReportRepository;
     private final PostRepository postRepository;
 
-    @Scheduled(cron = "0 0 0 * * *") // 매일 0시(자정)에 실행
+    @Scheduled(cron = "0 */1 * * * *") // 매일 0시(자정)에 실행
     @Transactional // 탈퇴 후 30일 이내 로그인하면 데이터 복구, 30일 이후엔 데이터 삭제
     public void cleanupUsers() {
 
