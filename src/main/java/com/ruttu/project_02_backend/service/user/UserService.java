@@ -3,6 +3,7 @@ package com.ruttu.project_02_backend.service.user;
 import com.ruttu.project_02_backend.dto.user.MyInfoDto;
 import com.ruttu.project_02_backend.dto.user.UpdateNicknameDto;
 import com.ruttu.project_02_backend.entity.prod.user.UserEntity;
+import com.ruttu.project_02_backend.exception.user.DuplicateNicknameException;
 import com.ruttu.project_02_backend.exception.user.UserNotFoundException;
 import com.ruttu.project_02_backend.repository.prod.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class UserService {
 
         if (user.getNickname() == null || !nickname.equals(user.getNickname())
                 && userRepository.existsByNickname(nickname)) {
-            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+            throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다.");
         }
 
         System.out.println("닉네임 변경 전 : " + user.getNickname());

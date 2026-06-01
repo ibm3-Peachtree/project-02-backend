@@ -16,5 +16,7 @@ public class RoutineListDto {
     private List<Boolean> dow;
     private LocalTime targetArrivalTime;
     private LocalTime recommendedDepartureTime;
+    private int spareTime;
+    private boolean excludeHoliday;
     private int estimatedDuration;
 }

@@ -29,4 +29,5 @@ public class LiveRouteDto {
         this.endName = routeDto.getEndName();
         this.path = routeDto.getPath();
     }
+
 }

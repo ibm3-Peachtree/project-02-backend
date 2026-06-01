@@ -33,6 +33,12 @@ public class UserRoutineEntity {
     @Column(name = "routine_name", nullable = false)
     private String routineName;
 
+    @Column(name = "exclude_holiday", nullable = false)
+    private boolean excludeHoliday;
+
+    @Column(name = "spare_time", nullable = false)
+    private int spareTime;
+
     @Column(name = "origin_alias")
     private String originAlias;
 

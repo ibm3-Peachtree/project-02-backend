@@ -18,5 +18,7 @@ public class RoutineDetailDto {
     private LocalTime targetArrivalTime;
     private LocalTime recommendedDepartureTime;
     private int estimatedDuration;
+    private int spareTime;
+    private boolean excludeHoliday;
     private RouteDto route;
 }
