@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
@@ -57,11 +59,13 @@ public class UserController {
             description = "회원 탈퇴"
     )
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<Void> withdrawUser(
+    public ResponseEntity<Map<String, String>> withdrawUser(
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         userService.withdrawUser(user.getUserId());
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                Map.of("message", "회원 탈퇴되었습니다")
+        );
     }
 }
