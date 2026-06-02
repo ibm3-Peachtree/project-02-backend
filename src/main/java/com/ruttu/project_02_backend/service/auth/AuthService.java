@@ -84,6 +84,7 @@ public class AuthService {
 
                     return LoginResponseDto.builder()
                             .status("DORMANT")
+                            .userId(userEntity.getId())
                             .build();
                 }
 
@@ -210,8 +211,12 @@ public class AuthService {
 
     public void restoreUser(Long userId) {
 
+        if (userId == null || userId == 0) {
+            throw new RuntimeException("유효하지 않은 userId");
+        }
+
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다. userId=" + userId));
 
         user.setStatus("ACTIVE");
         user.setWithdrawnAt(null);
