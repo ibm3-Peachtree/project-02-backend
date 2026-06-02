@@ -13,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users")
@@ -27,7 +25,7 @@ public class UserController {
             description = "닉네임 등록 및 변경"
     )
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<Map<String, String>> updateNickname(
+    public ResponseEntity<Void> updateNickname(
             @AuthenticationPrincipal CustomUserDetails user,
             @Valid @RequestBody UpdateNicknameDto updateNicknameDto
     ) {
@@ -36,9 +34,7 @@ public class UserController {
                 updateNicknameDto
         );
 
-        return ResponseEntity.ok(
-                Map.of("message", "닉네임 변경 완료")
-        );
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
@@ -61,13 +57,11 @@ public class UserController {
             description = "회원 탈퇴"
     )
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<Map<String, String>> withdrawUser(
+    public ResponseEntity<Void> withdrawUser(
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         userService.withdrawUser(user.getUserId());
 
-        return ResponseEntity.ok(
-                Map.of("message", "회원 탈퇴되었습니다")
-        );
+        return ResponseEntity.noContent().build();
     }
 }

@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -77,12 +76,10 @@ public class AddressController {
             description = "저장된 주소를 삭제")
     @ApiResponse(responseCode = "204", description = "삭제 성공")
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<Map<String, String>> deleteAddress(
+    public ResponseEntity<Void> deleteAddress(
             @PathVariable Long addressId
     ) {
         addressService.deleteAddress(addressId);
-        return ResponseEntity.ok(
-                Map.of("message", "주소가 삭제되었습니다")
-        );
+        return ResponseEntity.noContent().build();
     }
 }
