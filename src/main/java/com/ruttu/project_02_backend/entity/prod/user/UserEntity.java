@@ -39,28 +39,42 @@ public class UserEntity {
     @Column(name = "status")
     private String status;
 
-    @ColumnDefault("1")
-    @Column(name = "is_reco_departure_noti_enabled")
-    private Boolean isRecoDepartureNotiEnabled;
-
-    @Column(name = "brief_notification_time")
-    private LocalTime briefNotificationTime;
-
+    // -- 알림 설정 프론트하고 맞춰서 이름 변경 --
+    // 🚍 출발 알림
+    @Column(name = "departure_alert", nullable = false)
     @ColumnDefault("0")
-    @Column(name = "brief_notification_day_offset")
-    private Integer briefNotificationDayOffset;
+    private Boolean departureAlert; // ON/OFF
 
-    @ColumnDefault("1")
-    @Column(name = "is_brief_notification_enabled")
-    private Boolean isBriefNotificationEnabled;
+    @Column(name = "departure_minutes")
+    private String departureMinutes; // "5분 전", "10분 전", "15분 전", "30분 전"
 
-    @ColumnDefault("5")
-    @Column(name = "transit_notification_min")
-    private Integer transitNotificationMin;
+    // 🚇 하차 알림
+    @Column(name = "alighting_alert", nullable = false)
+    @ColumnDefault("false")
+    private Boolean alightingAlert; // ON/OFF
 
-    @ColumnDefault("1")
-    @Column(name = "allowed_tts")
-    private Boolean allowedTts;
+    @Column(name = "alighting_mode")
+    private String alightingMode; // "진동", "소리", "진동+소리"
+
+    @Column(name = "alighting_stops")
+    private String alightingStops; // "1정류장 전", "2정류장 전", "3정류장 전"
+
+    // 🔊 TTS
+    @Column(name = "tts_enabled", nullable = false)
+    @ColumnDefault("false")
+    private Boolean ttsEnabled; // ON/OFF
+
+    @Column(name = "tts_mode")
+    private String ttsMode; // "매 단계마다", "환승 시에만", "출발·도착만"
+
+    // 📋 브리핑
+    @Column(name = "briefing_alert", nullable = false)
+    @ColumnDefault("false")
+    private Boolean briefingAlert; // ON/OFF
+
+    @Column(name = "morning_time")
+    private LocalTime morningTime; // 시간 설정
+    // -- 알림 설정 프론트하고 맞춰서 이름 변경 --
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)
