@@ -1,0 +1,35 @@
+spring:
+
+  datasource:
+    prod:
+      jdbc-url: jdbc:mysql://${DEV_HOST}:${PROD_MYSQL_PORT}/prod?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+      username: ${DEV_MYSQL_USER}
+      password: ${MYSQL_PW}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    stats:
+      jdbc-url: jdbc:mysql://${DEV_HOST}:${PROD_MYSQL_PORT}/stats?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+      username: ${DEV_MYSQL_USER}
+      password: ${MYSQL_PW}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # create, create-drop, update, validate 중 선택
+        
+  data:
+    redis:
+      host: ${DEV_HOST}
+      port: ${DEV_REDIS_PORT}
+      password: ${REDIS_PW}
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 5
+          min-idle: 2
+        
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
