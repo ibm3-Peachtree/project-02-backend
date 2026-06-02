@@ -34,7 +34,7 @@ public class NotificationController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/notification")
+    @PutMapping
     @Operation(
             summary = "알림 설정",
             description = "출발 권장 알림, 하차 알림, TTS 안내, 브리핑 알림 설정"
