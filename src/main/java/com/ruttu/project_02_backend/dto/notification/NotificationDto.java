@@ -1,14 +1,15 @@
 package com.ruttu.project_02_backend.dto.notification;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.*;
+
+import java.time.LocalTime;
 
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class NotificationDto {
 
     // 🚍 출발 알림
@@ -26,5 +27,6 @@ public class NotificationDto {
 
     // 📋 브리핑
     private boolean briefingAlert;
-    private String morningTime;        // "07:30"
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime morningTime;        // "07:30"
 }

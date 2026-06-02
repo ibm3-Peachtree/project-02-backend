@@ -7,6 +7,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -38,40 +39,42 @@ public class UserEntity {
     @Column(name = "status")
     private String status;
 
+    // -- 알림 설정 프론트하고 맞춰서 이름 변경 --
     // 🚍 출발 알림
     @Column(name = "departure_alert", nullable = false)
     @ColumnDefault("0")
-    private Boolean departureAlert;
+    private Boolean departureAlert; // ON/OFF
 
     @Column(name = "departure_minutes")
-    private String departureMinutes;
+    private String departureMinutes; // "5분 전", "10분 전", "15분 전", "30분 전"
 
     // 🚇 하차 알림
     @Column(name = "alighting_alert", nullable = false)
     @ColumnDefault("false")
-    private Boolean alightingAlert;
+    private Boolean alightingAlert; // ON/OFF
 
     @Column(name = "alighting_mode")
-    private String alightingMode;
+    private String alightingMode; // "진동", "소리", "진동+소리"
 
     @Column(name = "alighting_stops")
-    private String alightingStops;
+    private String alightingStops; // "1정류장 전", "2정류장 전", "3정류장 전"
 
     // 🔊 TTS
     @Column(name = "tts_enabled", nullable = false)
     @ColumnDefault("false")
-    private Boolean ttsEnabled;
+    private Boolean ttsEnabled; // ON/OFF
 
     @Column(name = "tts_mode")
-    private String ttsMode;
+    private String ttsMode; // "매 단계마다", "환승 시에만", "출발·도착만"
 
     // 📋 브리핑
     @Column(name = "briefing_alert", nullable = false)
     @ColumnDefault("false")
-    private Boolean briefingAlert;
+    private Boolean briefingAlert; // ON/OFF
 
     @Column(name = "morning_time")
-    private String morningTime;
+    private LocalTime morningTime; // 시간 설정
+    // -- 알림 설정 프론트하고 맞춰서 이름 변경 --
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)
