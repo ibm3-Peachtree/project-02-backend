@@ -27,7 +27,7 @@ public class UserController {
             description = "닉네임 등록 및 변경"
     )
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<Void> updateNickname(
+    public ResponseEntity<Map<String, String>> updateNickname(
             @AuthenticationPrincipal CustomUserDetails user,
             @Valid @RequestBody UpdateNicknameDto updateNicknameDto
     ) {
@@ -36,7 +36,9 @@ public class UserController {
                 updateNicknameDto
         );
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(
+                Map.of("message", "닉네임 변경 완료")
+        );
     }
 
     @GetMapping("/me")
