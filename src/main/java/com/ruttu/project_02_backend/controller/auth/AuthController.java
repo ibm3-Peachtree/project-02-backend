@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
@@ -68,10 +70,12 @@ public class AuthController {
             summary = "휴먼 계정 복구",
             description = "휴먼 계정 복구"
     )
-    public ResponseEntity<Void> restoreUser(@RequestBody LoginResponseDto request) {
+    public ResponseEntity<Map<String, String>> restoreUser(@RequestBody LoginResponseDto request) {
 
         authService.restoreUser(request.getUserId());
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(
+                Map.of("message", "휴먼 계정이 활성화되었습니다")
+        );
     }
 }
