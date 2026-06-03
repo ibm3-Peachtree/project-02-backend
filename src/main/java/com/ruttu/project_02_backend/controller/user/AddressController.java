@@ -75,7 +75,7 @@ public class AddressController {
     @Operation(summary = "주소 삭제",
             description = "저장된 주소를 삭제")
     @ApiResponse(responseCode = "204", description = "삭제 성공")
-
+    @SecurityRequirement(name = "JWT")
     public ResponseEntity<Void> deleteAddress(
             @PathVariable Long addressId
     ) {

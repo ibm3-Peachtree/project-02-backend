@@ -9,6 +9,7 @@ import com.ruttu.project_02_backend.dto.routine.odsay.RouteDto;
 import com.ruttu.project_02_backend.dto.routine.routine.RouteListDto;
 import com.ruttu.project_02_backend.service.routine.LiveRouteService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -110,8 +111,9 @@ public class LiveRouteController {
                     description = "경로 조회 성공",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = LiveRouteDto.class)
-                    )
+                            array = @ArraySchema(
+                                    schema = @Schema(implementation = RouteListDto.class)
+                            )                    )
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -143,7 +145,7 @@ public class LiveRouteController {
                     description = "경로 조회 성공",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = LiveRouteDto.class)
+                            schema = @Schema(implementation = RouteDto.class)
                     )
             ),
             @ApiResponse(

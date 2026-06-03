@@ -38,7 +38,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/restore").permitAll()
                        .requestMatchers("/actuator/health").permitAll()
-//                        .requestMatchers(HttpMethod.POST, "/me/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
