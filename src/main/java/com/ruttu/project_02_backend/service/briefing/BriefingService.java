@@ -8,49 +8,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BriefingService {
     private final RedisTemplate<String, Object> redisTemplate;
-    private final ObjectMapper mapper;
 
     private final RoutineService routineService;
 
-    public Set<IncidentDto> getTrafficSchedule(){
-
-        LocalDate today = LocalDate.now();
-        String date = today.format(DateTimeFormatter.BASIC_ISO_DATE);
-        Set<String> keys = redisTemplate.keys(
-                "incident:서울특별시:*:" + date + ":set"
-        );
-
-        Set<IncidentDto> allIncidents = keys.stream()
-                .map(key -> redisTemplate.opsForSet().members(key))
-                .filter(Objects::nonNull)
-                .flatMap(Set::stream)
-                .map(obj -> {
-                    try {
-                        return mapper.readValue(
-                                (String) obj,
-                                IncidentDto.class
-                        );
-                    } catch (RuntimeException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .collect(Collectors.toSet());
-        return allIncidents;
-    }
     private final LiveRouteService liveRouteService;
     private final GeminiService geminiService;
 
@@ -108,36 +78,47 @@ public class BriefingService {
                 airQuality.getPm10().getSeoul(),
                 airQuality.getPm25().getSeoul()
         );
+        GeminiResultDto supplies;
 
-        // 준비물
-        String prompt = """
-                            현재 날씨 정보:
-                온도: %.1f℃
-                최저온도: %.1f℃
-                최고온도: %.1f℃
-                구름: %s
-                강수량: %s
-                미세먼지: %s
-                초미세먼지: %s
-                            
-                            위 날씨를 바탕으로 오늘의 옷차림과 준비물을 추천해줘.
-                            
-                            반드시 아래 JSON 형식으로만 응답해.
-                            설명, 마크다운, 코드블록 없이 JSON만 반환해.
-                            
-                            {
-                              "clothes": "옷차림 추천",
-                              "supplies": "준비물 추천"
-                            }
-                            """.formatted(todayWeather.getTmp(),
-                todayWeather.getMinTemp(),
-                todayWeather.getMaxTemp(),
-                todayWeather.getSky(),
-                todayWeather.getPcp(),
-                todayWeather.getPm10(),
-                todayWeather.getPm25());
+        try {
+            supplies = routineService.readJson(
+                    (String) redisTemplate.opsForValue()
+                            .get(geminiService.getSuppliesKey(latlng.getLatitude(), latlng.getLongitude(), date)),
+                    GeminiResultDto.class
+            );
+        } catch (IllegalStateException e) {
+            String prompt = """
+            현재 날씨 정보:
+            온도: %.1f℃
+            최저온도: %.1f℃
+            최고온도: %.1f℃
+            구름: %s
+            강수량: %s
+            미세먼지: %s
+            초미세먼지: %s
 
-        GeminiResultDto supplies = geminiService.generate(prompt);
+            위 날씨를 바탕으로 오늘의 옷차림과 준비물을 추천해줘.
+
+            반드시 아래 JSON 형식으로만 응답해.
+            설명, 마크다운, 코드블록 없이 JSON만 반환해.
+
+            {
+              "clothes": "옷차림 추천",
+              "supplies": "준비물 추천"
+            }
+            """.formatted(
+                    todayWeather.getTmp(),
+                    todayWeather.getMinTemp(),
+                    todayWeather.getMaxTemp(),
+                    todayWeather.getSky(),
+                    todayWeather.getPcp(),
+                    todayWeather.getPm10(),
+                    todayWeather.getPm25()
+            );
+
+            supplies = geminiService.generate(latlng.getLatitude(), latlng.getLongitude(), date, prompt);
+        }
+
         return new ResponseWeatherDto(
                 todayWeather,
                 supplies
@@ -146,20 +127,15 @@ public class BriefingService {
     }
 
 
+
     private String getPmKey(String date){
         return "pm:" + date;
     }
 
     private String getWeatherKey(double lat, double lng, String date){
-        return "weather" + ":" + getLat(lat) + ":" +  getLng(lng) + ":" + date;
-    }
-    private double getLat(double lat) {
-        return Math.round(lat * 100) / 100.0;
+        return "weather" + ":" + geminiService.getLat(lat) + ":" +  geminiService.getLng(lng) + ":" + date;
     }
 
-    private double getLng(double lng) {
-        return Math.round(lng * 100) / 100.0;
-    }
 
 
 }
