@@ -40,3 +40,4 @@ out/
 # config secrets
 **/key-bastion.pem
 **/*.env
+**/*.yaml
