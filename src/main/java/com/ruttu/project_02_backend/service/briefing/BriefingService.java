@@ -1,21 +1,5 @@
 package com.ruttu.project_02_backend.service.briefing;
 
-import com.ruttu.project_02_backend.dto.briefing.IncidentDto;
-import com.ruttu.project_02_backend.dto.routine.odsay.RouteDto;
-import com.ruttu.project_02_backend.service.routine.RoutineService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-@Service
-@RequiredArgsConstructor
 import com.ruttu.project_02_backend.dto.briefing.*;
 import com.ruttu.project_02_backend.dto.routine.live.CurrentXYDto;
 import com.ruttu.project_02_backend.service.routine.LiveRouteService;
@@ -26,10 +10,13 @@ import org.springframework.stereotype.Service;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -64,10 +51,6 @@ public class BriefingService {
                 .collect(Collectors.toSet());
         return allIncidents;
     }
-    private final RedisTemplate<String, Object> redisTemplate;
-    private final ObjectMapper mapper;
-
-    private final RoutineService routineService;
     private final LiveRouteService liveRouteService;
     private final GeminiService geminiService;
 
