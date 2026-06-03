@@ -19,6 +19,7 @@ import com.ruttu.project_02_backend.util.RefreshTokenHashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +39,8 @@ public class AuthService {
     private final UserRepository userRepository;
     private final TokenMngtRepository tokenMngtRepository;
     private final JwtUtil jwtUtil;
+
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Transactional
     //로그인 서비스 구현
@@ -91,17 +94,17 @@ public class AuthService {
                 throw new UnauthorizedException("탈퇴된 계정입니다");
             }
             //JWT 발급
+            Long userId = userEntity.getId();
             String accessToken =
-                    jwtUtil.generateAccessToken(userEntity.getId(), userEntity.getRole());
+                    jwtUtil.generateAccessToken(userId, userEntity.getRole());
 
             String refreshToken =
-                    jwtUtil.generateRefreshToken(userEntity.getId());
+                    jwtUtil.generateRefreshToken(userId);
             //refreshToken 저장
             Instant expiresAt =
                     Instant.now().plusMillis(jwtUtil.getRefreshExpirationMs());
-
             TokenMngtEntity token = new TokenMngtEntity();
-            token.setUserId(userEntity.getId());
+            token.setUserId(userId);
             token.setRefreshTokenHash(hash(refreshToken));
             token.setExpiresAt(expiresAt);
             token.setRevoked(false);
@@ -109,6 +112,11 @@ public class AuthService {
             token.setCreatedAt(Instant.now());
 
             tokenMngtRepository.save(token);
+
+            // redis에 google 토큰 저장
+            redisTemplate.opsForValue().set(
+                    getGoogleTokenKey(userId),
+                    request.getAccessToken());
 
             // 이 dto 형식으로 반환
             return LoginResponseDto.builder()
@@ -167,6 +175,10 @@ public class AuthService {
 
         token.setRevoked(true);
 
+        // redis에 google 토큰 삭제
+        redisTemplate.delete(
+                getGoogleTokenKey(token.getUserId()));
+
         System.out.println("로그아웃 성공");
     }
 
@@ -224,5 +236,9 @@ public class AuthService {
         userRepository.save(user);
         System.out.println(
                 "[RESTORE] userId=" + user.getId() + " -> ACTIVE");
+    }
+
+    public String getGoogleTokenKey(Long userId){
+        return "google:token:" + userId;
     }
 }

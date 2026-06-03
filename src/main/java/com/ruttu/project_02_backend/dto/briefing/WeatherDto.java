@@ -13,11 +13,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class WeatherDto {
     private LocalDateTime dateTime;
-    private int tmp;
-    private String wsd;
-    private String sky;
-    private int pop;
-    private String pcp;
-    private int reh;
-    private String sno;
+    private String TMP;
+    private String WSD;
+    private String SKY;
+    private String POP;
+    private String PCP;
+    private String REH;
+    private String SNO;
 }
