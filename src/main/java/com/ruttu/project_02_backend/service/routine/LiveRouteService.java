@@ -408,7 +408,7 @@ public class LiveRouteService {
                 * Math.sin(dLng / 2) * Math.sin(dLng / 2);
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
-    private String getLocationKey(Long userId){
+    public String getLocationKey(Long userId){
         return "location:user:" + userId;
     }
     private String getTodayMyRouteKey(Long userId){
