@@ -2,7 +2,9 @@ package com.ruttu.project_02_backend.service.briefing;
 
 import com.ruttu.project_02_backend.dto.briefing.GeminiResultDto;
 import com.ruttu.project_02_backend.dto.briefing.ResponseGeminiDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -14,6 +16,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @Service
 public class GeminiService {
 
@@ -21,8 +24,10 @@ public class GeminiService {
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public GeminiResultDto generate(String prompt) {
+
+    public GeminiResultDto generate(double lat, double lng, String date, String prompt) {
 
         String url =
                 "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="
@@ -65,9 +70,25 @@ public class GeminiService {
 
         ObjectMapper mapper = new ObjectMapper();
         try {
-            return mapper.readValue(text, GeminiResultDto.class);
+            GeminiResultDto res = mapper.readValue(text, GeminiResultDto.class);
+
+            String json = mapper.writeValueAsString(res);
+            redisTemplate.opsForValue().set(getSuppliesKey(lat, lng, date), json);
+
+            return res;
         } catch (Exception e) {
             throw new RuntimeException("Gemini 응답 JSON 파싱 실패\n" + text, e);
         }
+    }
+    public double getLat(double lat) {
+        return Math.round(lat * 100) / 100.0;
+    }
+
+    public double getLng(double lng) {
+        return Math.round(lng * 100) / 100.0;
+    }
+
+    public String getSuppliesKey(double lat, double lng, String date){
+        return "supplies:" + ":" + getLat(lat) + ":" +  getLng(lng)+ ":" + date;
     }
 }
