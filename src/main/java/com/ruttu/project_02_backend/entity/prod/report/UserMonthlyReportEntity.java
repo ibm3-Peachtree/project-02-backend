@@ -26,6 +26,9 @@ public class UserMonthlyReportEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "user_routine_id", nullable = false)
+    private Long userRoutineId;
+
     @Column(name = "year", nullable = false)
     private Integer year;
 
