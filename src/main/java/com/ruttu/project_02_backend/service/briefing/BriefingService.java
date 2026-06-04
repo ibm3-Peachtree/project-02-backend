@@ -31,7 +31,7 @@ public class BriefingService {
         String hour = String.format("%02d", today.getHour());
         // 현재 위치 조회
         CurrentXYDto latlng = routineService.readJson(
-                (String) redisTemplate.opsForValue().get(liveRouteService.getLocationKey(userId)),
+                (String) redisTemplate.opsForList().index(liveRouteService.getLocationKey(userId), -1),
                 CurrentXYDto.class
         );
 

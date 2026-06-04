@@ -20,7 +20,7 @@ public class LiveLocationService {
 
         String key = "location:user:" + userId;
         String json = mapper.writeValueAsString(liveLocationDto);
-        redisTemplate.opsForValue().set(key, json);
+        redisTemplate.opsForList().rightPush(key, json);
         System.out.println("saved " + key);
 
     }

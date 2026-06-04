@@ -1,5 +1,6 @@
 package com.ruttu.project_02_backend.entity.prod.report;
 
+import com.ruttu.project_02_backend.dto.report.DailyDto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -51,7 +52,7 @@ public class UserWeeklyReportEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "daily", nullable = false)
-    private Map<String, Object> daily;
+    private DailyDto daily;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)

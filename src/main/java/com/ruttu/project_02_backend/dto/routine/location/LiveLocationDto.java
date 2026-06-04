@@ -9,6 +9,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class LiveLocationDto {
 
+    private String type;
     private double latitude;
     private double longitude;
     private double speed;

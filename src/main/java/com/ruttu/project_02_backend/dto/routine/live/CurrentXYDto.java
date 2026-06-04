@@ -11,9 +11,11 @@ import lombok.Setter;
 public class CurrentXYDto {
     private Double latitude;
     private Double longitude;
+    private Double accuracy;
 
     public CurrentXYDto(LiveLocationDto liveLocationDto) {
         this.setLatitude(liveLocationDto.getLatitude());
         this.setLongitude(liveLocationDto.getLongitude());
+        this.setAccuracy(liveLocationDto.getAccuracy());
     }
 }

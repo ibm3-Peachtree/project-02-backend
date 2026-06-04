@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface UserWeeklyReportRepository extends JpaRepository<UserWeeklyReportEntity, Long> {
     void deleteByUserIdIn(List<Long> userIds);
+
+    List<UserWeeklyReportEntity> findAllByUserId(Long userId);
 }
