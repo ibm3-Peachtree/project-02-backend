@@ -348,7 +348,9 @@ public class LiveRouteService {
                 todayRoute.getPayment(),
                 todayRoute.getTotalDistance(),
                 getCalories(totalWalkTimeMin),
-                isNegativeDifference(
+                !routineCompleteDto.getDepartureTime()
+                        .isBefore(userRoutineEntity.getRecoDepartureTime())
+                        && isNegativeDifference(
                         userRoutineEntity.getTargetArrivalTime(),
                         routineCompleteDto.getArrivalTime()),
                 todayXY.equals(userRoutineEntity.getPreferredRouteXy()),
@@ -360,7 +362,7 @@ public class LiveRouteService {
         );
         UserDailyStatsEntity entity = new UserDailyStatsEntity();
         entity.setUserId(userId);
-        entity.setUserRoutineId(routineId);  // routineId → userRoutineId 명시
+        entity.setUserRoutineId(routineId);
         entity.setDepartureTime(routineCompleteDto.getDepartureTime());
         entity.setArrivalTime(routineCompleteDto.getArrivalTime());
         entity.setTodayRoutine(todayXY.getRouteXYDtoList());
@@ -372,7 +374,7 @@ public class LiveRouteService {
                 routineCompleteDto.getArrivalTime()));
         entity.setRouteFollowed(
                 userRoutineEntity.getPreferredRouteXy()
-                        .equals(todayXY.getRouteXYDtoList())); // 수정
+                        .equals(todayXY.getRouteXYDtoList()));
         entity.setComfort(todayRoutineForDBDto.isComfort());
         entity.setSatWaitTimeScore(routineCompleteDto.getSatWaitTimeScore());
         entity.setSatEtaScore(routineCompleteDto.getSatEtaScore());
