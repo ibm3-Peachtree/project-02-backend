@@ -24,7 +24,7 @@ public class MonthlyReportDto {
     private int monthlyTransportCost;
     private int monthlyBurnedCalories;
     private int lateRiskCount;
-    private CommuteTimeMinDto recommendedComfortTime;
+    private ComfortTimeDto recommendedComfortTime;
 
     public MonthlyReportDto(UserMonthlyReportEntity entity){
         this.setId(entity.getId());
