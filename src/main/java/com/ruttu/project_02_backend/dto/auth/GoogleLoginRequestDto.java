@@ -8,6 +8,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class GoogleLoginRequestDto {
-
     private String idToken;
+    private String accessToken;
+
 }

@@ -1,5 +1,6 @@
 package com.ruttu.project_02_backend.entity.prod.report;
 
+import com.ruttu.project_02_backend.dto.report.CommuteTimeMinDto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,15 +37,15 @@ public class UserMonthlyReportEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "avg_commute_time_min", nullable = false)
-    private Map<String, Object> avgCommuteTimeMin;
+    private CommuteTimeMinDto avgCommuteTimeMin;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "max_commute_time_min", nullable = false)
-    private Map<String, Object> maxCommuteTimeMin;
+    private CommuteTimeMinDto maxCommuteTimeMin;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "min_commute_time_min", nullable = false)
-    private Map<String, Object> minCommuteTimeMin;
+    private CommuteTimeMinDto minCommuteTimeMin;
 
     @Column(name = "monthly_transport_cost")
     private Integer monthlyTransportCost;
@@ -57,7 +58,7 @@ public class UserMonthlyReportEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "recommended_comfort_time", nullable = false)
-    private Map<String, Object> recommendedComfortTime;
+    private CommuteTimeMinDto recommendedComfortTime;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)

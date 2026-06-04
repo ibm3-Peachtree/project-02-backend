@@ -1,6 +1,7 @@
 package com.ruttu.project_02_backend.service.routine;
 
 import com.ruttu.project_02_backend.dto.routine.live.RoutineCompleteDto;
+import com.ruttu.project_02_backend.dto.routine.location.LiveLocationDto;
 import com.ruttu.project_02_backend.dto.routine.odsay.*;
 import com.ruttu.project_02_backend.dto.routine.live.*;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentLocationDto;
@@ -41,7 +42,7 @@ public class LiveRouteService {
     @Transactional(readOnly = true)
     public CurrentLocationDto getRouteProgress(Long userId) {
         SpeedDto speed = routineService.readJson(
-                (String) redisTemplate.opsForValue().get(getLocationKey(userId)),
+                (String) redisTemplate.opsForList().index(getLocationKey(userId), -1),
                 SpeedDto.class
         );
         CurrentLocationDto dto = new CurrentLocationDto();
@@ -205,7 +206,7 @@ public class LiveRouteService {
     @Transactional(readOnly = true)
     public CurrentSectionDto getMyCurrentSection(Long userId){
         CurrentXYDto xy = routineService.readJson(
-                (String) redisTemplate.opsForValue().get(getLocationKey(userId)),
+                (String) redisTemplate.opsForList().index(getLocationKey(userId), -1),
                 CurrentXYDto.class
         );
         UserRoutineEntity routine = getTodayRoutine(userId);
@@ -240,9 +241,8 @@ public class LiveRouteService {
 
     @Transactional(readOnly = true)
     public CurrentSectionDto getRecoCurrentSection(Long userId){
-//        return getCurrentSection(userId, , ;
         CurrentXYDto xy = routineService.readJson(
-                (String) redisTemplate.opsForValue().get(getLocationKey(userId)),
+                (String) redisTemplate.opsForList().index(getLocationKey(userId), -1),
                 CurrentXYDto.class
         );
 
@@ -252,6 +252,8 @@ public class LiveRouteService {
         );
 
         // 가장 가까운 지점 = 현재 향하고 있는 목표 지점
+        double threshold = Math.max(xy.getAccuracy(), 100.0);
+
         int nearestIndex = IntStream.range(0, routeXY.size())
                 .filter(i -> routeXY.get(i) != null
                         && routeXY.get(i).getY() != null
@@ -262,6 +264,12 @@ public class LiveRouteService {
                                 xy.getLatitude(), xy.getLongitude(),
                                 routeXY.get(i).getY(), routeXY.get(i).getX())
                 ))
+                .filter(i ->
+                        distanceMeters(
+                                xy.getLatitude(), xy.getLongitude(),
+                                routeXY.get(i).getY(), routeXY.get(i).getX())
+                                <= threshold
+                )
                 .orElse(-1);
 
         return new CurrentSectionDto(
@@ -272,45 +280,6 @@ public class LiveRouteService {
         );
     }
 
-
-//    private CurrentSectionDto getCurrentSection(Long userId, String routeKey, String xyKey){
-//        CurrentXYDto xy = routineService.readJson(
-//                (String) redisTemplate.opsForValue().get(getLocationKey(userId)),
-//                CurrentXYDto.class
-//        );
-//        UserRoutineEntity routine = getTodayRoutine(userId);
-//        if (routine == null) return null; // null 체크 추가
-//        Long routineId = routine.getId();
-//        LiveRouteForReportDto route = routineService.readJson(
-//                (String) redisTemplate.opsForValue().get(routeKey),
-//                new TypeReference<LiveRouteForReportDto>() {}
-//        );
-//        RouteXYForReportDto routeXY = routineService.readJson(
-//                (String) redisTemplate.opsForValue().get(xyKey),
-//                new TypeReference<RouteXYForReportDto>() {}
-//        );
-//
-//        // 가장 가까운 지점 = 현재 향하고 있는 목표 지점
-//        List<RouteXYDto> routeXYList = routeXY.getRouteXYDtoList();
-//        int nearestIndex = IntStream.range(0, routeXYList.size())
-//                .filter(i -> routeXYList.get(i) != null
-//                        && routeXYList.get(i).getY() != null
-//                        && routeXYList.get(i).getX() != null)
-//                .boxed()
-//                .min(Comparator.comparingDouble(i ->
-//                        distanceMeters(
-//                                xy.getLatitude(), xy.getLongitude(),
-//                                routeXYList.get(i).getY(), routeXYList.get(i).getX())
-//                ))
-//                .orElse(-1);
-//
-//        return new CurrentSectionDto(
-//                nearestIndex,
-//                routeXYList.stream()
-//                        .map(RouteXYDto::getNo).toList(),
-//                routeXYList
-//        );
-//    }
 
     @Transactional
     public void myRoutecompleted(Long userId, RoutineCompleteDto routineCompleteDto){
@@ -339,8 +308,30 @@ public class LiveRouteService {
                 (String) redisTemplate.opsForValue().get(xyKey),
                 new TypeReference<RouteXYForReportDto>() {}
         );
-        // 칼로리와 쾌적함을 구해야 함..
 
+        // calories
+        int totalWalkTimeMin = todayRoute.getPath()
+                .stream()
+                .filter(r -> "walk".equals(r.getType()))
+                .mapToInt(RouteSectionDto::getSectionTime)
+                .sum();
+
+        // comfort
+        List<Object> locationList = redisTemplate.opsForList()
+                 .range(getLocationKey(userId), 0, -1);
+
+        List<LiveLocationDto> walkSpeed = locationList.stream()
+                .map(v ->
+                    routineService.readJson(
+                        (String) redisTemplate.opsForList().index(getLocationKey(userId), -1),
+                        LiveLocationDto.class
+                ))
+                .filter(l -> "walk".equals(l.getType()))
+                .toList();
+        double comfortIndex =  (double) (walkSpeed
+                .stream()
+                .filter(l -> l.getSpeed() >= 2 && l.getSpeed() <= 4.5)
+                .count())/walkSpeed.size();
 
         // db에 저장
         Long routineId = todayRoute.getRoutineId();
@@ -356,12 +347,12 @@ public class LiveRouteService {
                 todayXY.getRouteXYDtoList(),
                 todayRoute.getPayment(),
                 todayRoute.getTotalDistance(),
-                0, // 하드 코딩
+                getCalories(totalWalkTimeMin),
                 isNegativeDifference(
                         userRoutineEntity.getTargetArrivalTime(),
                         routineCompleteDto.getArrivalTime()),
-                userRoutineEntity.getPreferredRouteXy().equals(todayXY),
-                true, // 하드 코딩
+                todayXY.equals(userRoutineEntity.getPreferredRouteXy()),
+                comfortIndex>0.3,
                 routineCompleteDto.getSatWaitTimeScore(),
                 routineCompleteDto.getSatEtaScore(),
                 routineCompleteDto.getSatRouteScore(),
@@ -375,14 +366,14 @@ public class LiveRouteService {
         entity.setTodayRoutine(todayXY.getRouteXYDtoList());
         entity.setTransportCost(todayRoute.getPayment());
         entity.setTotalDistanceMeter(todayRoute.getTotalDistance());
-        entity.setEstimatedCalories(0);
+        entity.setEstimatedCalories(todayRoutineForDBDto.getEstimatedCalories());
         entity.setLate(isNegativeDifference(
                 userRoutineEntity.getTargetArrivalTime(),
                 routineCompleteDto.getArrivalTime()));
         entity.setRouteFollowed(
                 userRoutineEntity.getPreferredRouteXy()
                         .equals(todayXY.getRouteXYDtoList())); // 수정
-        entity.setComfort(true);
+        entity.setComfort(todayRoutineForDBDto.isComfort());
         entity.setSatWaitTimeScore(routineCompleteDto.getSatWaitTimeScore());
         entity.setSatEtaScore(routineCompleteDto.getSatEtaScore());
         entity.setSatRouteScore(routineCompleteDto.getSatRouteScore());
@@ -392,6 +383,10 @@ public class LiveRouteService {
         // redis 삭제
         redisTemplate.delete(routeKey);
         redisTemplate.delete(xyKey);
+    }
+
+    private int getCalories(int walkMinutes){
+        return (int) (3.5 * 65 * (walkMinutes / 60.0));
     }
     private boolean isNegativeDifference(LocalTime targetArrivalTime,
                                         LocalTime arrivalTime) {
@@ -408,7 +403,7 @@ public class LiveRouteService {
                 * Math.sin(dLng / 2) * Math.sin(dLng / 2);
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
-    private String getLocationKey(Long userId){
+    public String getLocationKey(Long userId){
         return "location:user:" + userId;
     }
     private String getTodayMyRouteKey(Long userId){

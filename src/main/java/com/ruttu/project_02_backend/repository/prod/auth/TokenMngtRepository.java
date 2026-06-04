@@ -12,4 +12,6 @@ public interface TokenMngtRepository extends JpaRepository<TokenMngtEntity, Long
     Optional<TokenMngtEntity> findByRefreshTokenHash(String hashed);
 
     void deleteByUserIdIn(List<Long> userIds);
+
+    TokenMngtEntity findByUserId(Long userId);
 }
