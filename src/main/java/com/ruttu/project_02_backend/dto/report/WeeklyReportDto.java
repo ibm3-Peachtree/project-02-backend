@@ -22,7 +22,7 @@ public class WeeklyReportDto {
     private int weeklyTransportCost;
     private int weeklyBurnedCalories;
     private int lateRiskCount;
-    private int avgWaitTimeMin;
+    private Integer avgWaitTimeMin;
     private DailyDto daily;
 
     public WeeklyReportDto(UserWeeklyReportEntity entity){
