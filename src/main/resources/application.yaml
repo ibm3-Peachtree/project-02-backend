@@ -1,7 +1,17 @@
 spring:
   application:
     name: project-02-backend
-
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - profile
+              - email
+              - https://www.googleapis.com/auth/calendar.readonly
 odsay:
   api:
     key: ${ODSAY_API}
@@ -13,6 +23,7 @@ google:
   client-id: ${GOOGLE_CLIENT_ID}
   client-secret: ${GOOGLE_CLIENT_SECRET}
 
+
 kakao:
   rest:
     api:
@@ -21,7 +32,7 @@ kakao:
 gemini:
   api:
     key: ${GEMINI_API_KEY_2}
-  
+
 logging:
   level:
     org.springframework.web: DEBUG
