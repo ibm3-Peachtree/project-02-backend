@@ -1,5 +1,6 @@
 package com.ruttu.project_02_backend.entity.prod.report;
 
+import com.ruttu.project_02_backend.dto.report.ComfortTimeDto;
 import com.ruttu.project_02_backend.dto.report.CommuteTimeMinDto;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -25,6 +26,9 @@ public class UserMonthlyReportEntity {
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    @Column(name = "user_routine_id", nullable = false)
+    private Long userRoutineId;
 
     @Column(name = "year", nullable = false)
     private Integer year;
@@ -58,7 +62,7 @@ public class UserMonthlyReportEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "recommended_comfort_time", nullable = false)
-    private CommuteTimeMinDto recommendedComfortTime;
+    private ComfortTimeDto recommendedComfortTime;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)

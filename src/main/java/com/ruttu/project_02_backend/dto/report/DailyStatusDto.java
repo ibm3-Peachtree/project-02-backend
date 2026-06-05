@@ -11,5 +11,5 @@ import lombok.Setter;
 @NoArgsConstructor
 public class DailyStatusDto {
     private int commuteTimeMin;
-    private boolean isComfort;
+    private int isComfort;
 }

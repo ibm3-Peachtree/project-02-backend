@@ -100,6 +100,7 @@ public class AuthService {
 
             String refreshToken =
                     jwtUtil.generateRefreshToken(userId);
+
             //refreshToken 저장
             Instant expiresAt =
                     Instant.now().plusMillis(jwtUtil.getRefreshExpirationMs());
@@ -128,6 +129,7 @@ public class AuthService {
                     .nickname(userEntity.getNickname())
                     .build();
         }catch(Exception e){
+            System.out.println(e.getMessage());
             throw new RuntimeException("로그인 실패");
         }
     }
@@ -147,6 +149,11 @@ public class AuthService {
                 .updatedAt(Instant.now())
                 .role("USER")
                 .status("ACTIVE")
+                // ✅ NOT NULL 컬럼 기본값 추가
+                .alightingAlert(false)
+                .departureAlert(false)
+                .briefingAlert(false)
+                .ttsEnabled(false)
                 .build();
 
         return userRepository.save(userEntity);

@@ -14,6 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class WeeklyReportDto {
     private Long id;
+    private Long userRoutineId;
     private int year;
     private int weekOfYear;
     private LocalDate weekStartDate;
@@ -21,11 +22,12 @@ public class WeeklyReportDto {
     private int weeklyTransportCost;
     private int weeklyBurnedCalories;
     private int lateRiskCount;
-    private int avgWaitTimeMin;
+    private Integer avgWaitTimeMin;
     private DailyDto daily;
 
     public WeeklyReportDto(UserWeeklyReportEntity entity){
         this.setId(entity.getId());
+        this.setId(entity.getUserRoutineId());
         this.setYear(entity.getYear());
         this.setWeekOfYear(entity.getWeekOfYear());
         this.setAvgCommuteTimeMin(entity.getAvgCommuteTimeMin());

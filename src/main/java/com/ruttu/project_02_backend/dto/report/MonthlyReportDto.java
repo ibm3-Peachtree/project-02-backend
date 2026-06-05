@@ -14,6 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class MonthlyReportDto {
     private Long id;
+    private Long userRoutineId;
     private int year;
     private int month;
     private LocalDate monthStartDate;
@@ -23,10 +24,11 @@ public class MonthlyReportDto {
     private int monthlyTransportCost;
     private int monthlyBurnedCalories;
     private int lateRiskCount;
-    private CommuteTimeMinDto recommendedComfortTime;
+    private ComfortTimeDto recommendedComfortTime;
 
     public MonthlyReportDto(UserMonthlyReportEntity entity){
         this.setId(entity.getId());
+        this.setUserRoutineId(entity.getUserRoutineId());
         this.setYear(entity.getYear());
         this.setMonth(entity.getMonth());
         this.setMonthStartDate(entity.getMonthStartDate());
