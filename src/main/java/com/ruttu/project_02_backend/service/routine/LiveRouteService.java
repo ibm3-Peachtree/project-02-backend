@@ -4,7 +4,6 @@ import com.ruttu.project_02_backend.dto.routine.live.RoutineCompleteDto;
 import com.ruttu.project_02_backend.dto.routine.location.LiveLocationDto;
 import com.ruttu.project_02_backend.dto.routine.odsay.*;
 import com.ruttu.project_02_backend.dto.routine.live.*;
-import com.ruttu.project_02_backend.dto.routine.location.CurrentLocationDto;
 import com.ruttu.project_02_backend.dto.routine.routine.RouteListDto;
 import com.ruttu.project_02_backend.entity.stats.UserDailyStatsEntity;
 import com.ruttu.project_02_backend.entity.prod.routine.UserRoutineEntity;
@@ -13,13 +12,17 @@ import com.ruttu.project_02_backend.repository.stats.UserDailyStatsRepository;
 import com.ruttu.project_02_backend.repository.prod.routine.UserRoutineRepository;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.*;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -27,10 +30,13 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 @Service
 public class LiveRouteService {
+    private static final Logger log =
+            LoggerFactory.getLogger(LiveRouteService.class);
 
     private final UserRoutineRepository userRoutineRepository;
     private final UserDailyStatsRepository userDailyStatsRepository;
 
+    private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper mapper;
 
@@ -38,23 +44,6 @@ public class LiveRouteService {
     private final RoutineService routineService;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
-
-    @Transactional(readOnly = true)
-    public CurrentLocationDto getRouteProgress(Long userId) {
-        SpeedDto speed = routineService.readJson(
-                (String) redisTemplate.opsForList().index(getLocationKey(userId), -1),
-                SpeedDto.class
-        );
-        CurrentLocationDto dto = new CurrentLocationDto();
-        dto.setUpdatedAt(Instant.now().toEpochMilli());
-
-        if (speed == null) {
-            dto.setStatus("대기중");
-            return dto;
-        }
-        dto.setStatus(getStatus(speed));
-        return dto;
-    }
 
     @Transactional
     public LiveRouteDto getMyRoute(Long userId) {
@@ -135,6 +124,72 @@ public class LiveRouteService {
         saveTodayRecoXYAtRedis(userId, routeXYForReportDto);
     }
 
+    @Transactional
+    public void saveDetourRoute(Long userId, int pathId){
+        List<DetourDto> detourList = getDetourList(userId);
+        DetourDto detour = detourList.get(pathId);
+
+        List<RouteSectionDto> routeSectionDtoList = new ArrayList<>();
+        detour.getPath_segments()
+                .stream()
+                .forEach(
+                        p -> {
+                            String trafficType = p.getDisplay_name().getFirst();
+                            String engType = getEngType(trafficType);
+                            routeSectionDtoList.add(
+                                    switch (engType) {
+                                        case "walk" -> new DetourWalkSectionDto(p);
+                                        case "bus" -> new DetourBusSectionDto(p);
+                                        case "subway" -> new DetourSubwaySectionDto(p);
+                                        default -> throw new IllegalArgumentException("지원하지 않는 타입: " + engType);
+                                    }
+                            );
+                        });
+
+
+        RouteDto liveRouteForReportDto = new RouteDto(detour.getPath_id(),
+                detour.getPath_segments().stream().mapToInt(DetourDto.pathSegments::getTotal_distance_m).sum()/1000, //km
+                (int) detour.getTotal_duration_min(),
+                999999,
+                detour.getPath_segments().stream()
+                        .filter(p -> !p.getDisplay_name().getFirst().equals("도보"))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("도보가 아닌 구간이 없습니다."))
+                        .getStations()
+                        .getFirst()
+                        .getName(),
+                detour.getPath_segments().getLast().getStations().getLast().getName(),
+                routeSectionDtoList);
+        List<RouteXYDto> routeXYForReportDto =
+                detour.getPath_segments()
+                        .stream()
+                        .filter(p -> !p.getDisplay_name().getFirst().equals("도보"))
+                        .flatMap(p -> {
+
+                            String trafficType =
+                                    p.getDisplay_name().getFirst();
+
+                            String engType =
+                                    getEngType(trafficType);
+
+                            return p.getStations()
+                                    .stream()
+                                    .map(s -> new RouteXYDto(
+                                            s.getName(),
+                                            s.getX(),
+                                            s.getY(),
+                                            s.getArs_id(),
+                                            engType,
+                                            engType + ":" + trafficType
+                                    ));
+                        })
+                        .toList();
+
+
+        saveTodayRecoRouteAtRedis(userId, new LiveRouteDto(liveRouteForReportDto));
+        saveTodayRecoXYAtRedis(userId, routeXYForReportDto);
+    }
+
     // 추천 경로 상세 조회
     @Transactional(readOnly = true)
     public RouteDto getRecommendedRouteDetail(Long userId, int recoId) {
@@ -204,82 +259,42 @@ public class LiveRouteService {
 
 
     @Transactional(readOnly = true)
-    public CurrentSectionDto getMyCurrentSection(Long userId){
-        CurrentXYDto xy = routineService.readJson(
-                (String) redisTemplate.opsForList().index(getLocationKey(userId), -1),
-                CurrentXYDto.class
-        );
-        UserRoutineEntity routine = getTodayRoutine(userId);
-        if (routine == null) return null; // null 체크 추가
+    public void sendIncidentsDetour(Long userId){
+        try {
+            String incident = (String) redisTemplate.opsForValue()
+                    .get(getIncidentsKey(userId));
 
-        RouteXYForReportDto routeXY = routineService.readJson(
-                (String) redisTemplate.opsForValue().get(getTodayMyXYKey(userId)),
-                new TypeReference<RouteXYForReportDto>() {}
-        );
+            List<DetourDto> detourList = getDetourList(userId);
+            messagingTemplate.convertAndSendToUser(
+                    userId.toString(),
+                    "/queue/incident",
+                    incident
+            );
 
-        // 가장 가까운 지점 = 현재 향하고 있는 목표 지점
-        List<RouteXYDto> routeXYList = routeXY.getRouteXYDtoList();
-        int nearestIndex = IntStream.range(0, routeXYList.size())
-                .filter(i -> routeXYList.get(i) != null
-                        && routeXYList.get(i).getY() != null
-                        && routeXYList.get(i).getX() != null)
-                .boxed()
-                .min(Comparator.comparingDouble(i ->
-                        distanceMeters(
-                                xy.getLatitude(), xy.getLongitude(),
-                                routeXYList.get(i).getY(), routeXYList.get(i).getX())
-                ))
-                .orElse(-1);
+            messagingTemplate.convertAndSendToUser(
+                    userId.toString(),
+                    "/queue/detour",
+                    detourList
+            );
 
-        return new CurrentSectionDto(
-                nearestIndex,
-                routeXYList.stream()
-                        .map(RouteXYDto::getNo).toList(),
-                routeXYList
-        );
+        }catch (IllegalStateException e){
+            log.debug("incident/detour 전송 스킵. userId={}", userId);
+        }
+
+    }
+
+    public DetourDto getDetour(Long userId, int pathId){
+        List<DetourDto> detourList = getDetourList(userId);
+        return detourList.get(pathId);
     }
 
     @Transactional(readOnly = true)
-    public CurrentSectionDto getRecoCurrentSection(Long userId){
-        CurrentXYDto xy = routineService.readJson(
-                (String) redisTemplate.opsForList().index(getLocationKey(userId), -1),
-                CurrentXYDto.class
-        );
-
-        List<RouteXYDto> routeXY = routineService.readJson(
-                (String) redisTemplate.opsForValue().get(getTodayRecoXYKey(userId)),
-                new TypeReference<List<RouteXYDto>>() {}
-        );
-
-        // 가장 가까운 지점 = 현재 향하고 있는 목표 지점
-        double threshold = Math.max(xy.getAccuracy(), 100.0);
-
-        int nearestIndex = IntStream.range(0, routeXY.size())
-                .filter(i -> routeXY.get(i) != null
-                        && routeXY.get(i).getY() != null
-                        && routeXY.get(i).getX() != null)
-                .boxed()
-                .min(Comparator.comparingDouble(i ->
-                        distanceMeters(
-                                xy.getLatitude(), xy.getLongitude(),
-                                routeXY.get(i).getY(), routeXY.get(i).getX())
-                ))
-                .filter(i ->
-                        distanceMeters(
-                                xy.getLatitude(), xy.getLongitude(),
-                                routeXY.get(i).getY(), routeXY.get(i).getX())
-                                <= threshold
-                )
-                .orElse(-1);
-
-        return new CurrentSectionDto(
-                nearestIndex,
-                routeXY.stream()
-                        .map(RouteXYDto::getNo).toList(),
-                routeXY
+    private List<DetourDto> getDetourList(Long userId){
+        return routineService.readJson(
+                (String) redisTemplate.opsForValue().get(getDetourKey(userId)),
+                new TypeReference<List<DetourDto>>() {}
         );
     }
-
 
     @Transactional
     public void myRoutecompleted(Long userId, RoutineCompleteDto routineCompleteDto){
@@ -287,6 +302,8 @@ public class LiveRouteService {
         String myRouteKey = getTodayMyRouteKey(userId);
         String myXyKey = getTodayMyXYKey(userId);
 
+        // location 삭제
+        redisTemplate.delete(getLocationKey(userId));
         saveDB(myRouteKey, myXyKey, userId, routineCompleteDto);
     }
 
@@ -296,6 +313,8 @@ public class LiveRouteService {
         String recoRouteKey = getTodayRecoRouteKey(userId);
         String recoXyKey = getTodayRecoXYKey(userId);
 
+        // location 삭제
+        redisTemplate.delete(getLocationKey(userId));
         saveDB(recoRouteKey, recoXyKey, userId, routineCompleteDto);
     }
 
@@ -387,6 +406,16 @@ public class LiveRouteService {
         redisTemplate.delete(xyKey);
     }
 
+    private String getEngType(String trafficType){
+        if (trafficType.equals("도보"))
+            return "walk";
+        else if (trafficType.contains("호선")) {
+            return "subway";
+        }
+        else{
+            return "bus";
+        }
+    }
     private int getCalories(int walkMinutes){
         return (int) (3.5 * 65 * (walkMinutes / 60.0));
     }
@@ -396,22 +425,21 @@ public class LiveRouteService {
         return seconds < 0;
     }
 
-    private double distanceMeters(double lat1, double lng1, double lat2, double lng2) {
-        final double R = 6371000;
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLng = Math.toRadians(lng2 - lng1);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    private static String getDetourKey(Long userId) {
+        return "routine:live:incident:full:" + userId;
     }
+
+    private static String getIncidentsKey(Long userId) {
+        return "user:incidents:" + userId;
+    }
+
     public String getLocationKey(Long userId){
         return "location:user:" + userId;
     }
-    private String getTodayMyRouteKey(Long userId){
+    public String getTodayMyRouteKey(Long userId){
         return "routine:live:my:route:user:" + userId;
     }
-    private String getTodayMyXYKey(Long userId){
+    public String getTodayMyXYKey(Long userId){
         return "routine:live:my:xy:user:" + userId;
     }
 
@@ -478,7 +506,7 @@ public class LiveRouteService {
                 });
     }
 
-    private String getTodayRecoXYKey(Long userId){
+    public String getTodayRecoXYKey(Long userId){
         return "routine:live:reco:xy:user:" + userId;
     }
     private String getTodayRecoRouteKey(Long userId){
@@ -495,7 +523,8 @@ public class LiveRouteService {
         String json = mapper.writeValueAsString(routeXYForReportDto);
         redisTemplate.opsForValue().set(key, json);
     }
-    private UserRoutineEntity getTodayRoutine(Long userId){
+
+    public UserRoutineEntity getTodayRoutine(Long userId){
         return userRoutineRepository.findAllByUserId(userId)
                 .stream()
                 .filter(r -> isToday(r.getPreferredDowMask()))
@@ -511,15 +540,5 @@ public class LiveRouteService {
         return (mask & (1L << todayIndex)) != 0;
     }
 
-    private String getStatus(SpeedDto speedDto){
-        double speed = speedDto.getSpeed();
 
-        if(speed < 0.3){
-            return "대기중";
-        } else if (speed < 2.2) {
-            return "도보중";
-        } else {
-            return "탑승중";
-        }
-    }
 }

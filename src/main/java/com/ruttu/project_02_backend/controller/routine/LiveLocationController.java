@@ -4,50 +4,72 @@ import com.ruttu.project_02_backend.config.CustomUserDetails;
 import com.ruttu.project_02_backend.dto.routine.location.LiveLocationDto;
 import com.ruttu.project_02_backend.service.routine.LiveLocationService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+
 
 @SecurityRequirement(name="JWT")
 @Tag(name = "Location API", description = "위치 관리 API")
-@RestController
-@RequestMapping("/me/routines/active")
+@Controller
+@RequestMapping("/me/routines/location")
 @RequiredArgsConstructor
 public class LiveLocationController {
 
     private final LiveLocationService liveLocationService;
     @Operation(
-            summary = "위치 등록",
-            description = "위치 등록"
+            summary = "나의 경로 조회",
+            description = "나의 경로 조회"
     )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "위치 등록 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = LiveLocationDto.class)
-                    )
-            )
-    }
-    )
-    @PatchMapping
-    public ResponseEntity<Void> updateLocation(
-            @RequestBody LiveLocationDto liveLocationDto,
+    @MessageMapping("/my")
+    public void myLocation(
+            LiveLocationDto liveLocationDto,
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        liveLocationService.updateLocation(user.getUserId(), liveLocationDto);
-        return ResponseEntity.ok().build();
+        Long userId = user.getUserId();
+
+        // 상태
+        liveLocationService.sendRouteProgress(
+                userId, liveLocationDto
+        );
+
+        // 나의 경로
+        liveLocationService.getMyCurrentSection(
+                userId, liveLocationDto
+        );
+
+        // 저장
+        liveLocationService.updateLocation(userId, liveLocationDto);
+
     }
+
+
+    @MessageMapping("/reco")
+    public void recoLocation(
+            LiveLocationDto liveLocationDto,
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        Long userId = user.getUserId();
+
+        // 상태
+        liveLocationService.sendRouteProgress(
+                userId, liveLocationDto
+        );
+
+        // 추천 경로
+        liveLocationService.getRecoCurrentSection(
+                userId, liveLocationDto
+        );
+
+        // 저장
+        liveLocationService.updateLocation(userId, liveLocationDto);
+
+    }
+
 }

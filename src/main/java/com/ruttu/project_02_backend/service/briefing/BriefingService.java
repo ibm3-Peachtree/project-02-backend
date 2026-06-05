@@ -1,7 +1,7 @@
 package com.ruttu.project_02_backend.service.briefing;
 
 import com.ruttu.project_02_backend.dto.briefing.*;
-import com.ruttu.project_02_backend.dto.routine.live.CurrentXYDto;
+import com.ruttu.project_02_backend.dto.routine.location.CurrentXYDto;
 import com.ruttu.project_02_backend.service.routine.LiveRouteService;
 import com.ruttu.project_02_backend.service.routine.RoutineService;
 import lombok.RequiredArgsConstructor;
