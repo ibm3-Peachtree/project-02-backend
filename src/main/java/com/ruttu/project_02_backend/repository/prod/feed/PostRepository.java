@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface PostRepository extends JpaRepository<PostEntity, Long> {
     void deleteByUserIdIn(List<Long> userIds);
+
+    List<PostEntity> findAllByOrderByCreatedAtDesc();
 }
