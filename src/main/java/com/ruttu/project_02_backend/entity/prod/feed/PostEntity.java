@@ -1,15 +1,14 @@
 package com.ruttu.project_02_backend.entity.prod.feed;
 
+import com.ruttu.project_02_backend.entity.prod.feed.enumtype.IssueType;
+import com.ruttu.project_02_backend.entity.prod.feed.enumtype.TransportType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
-import java.util.Map;
 
 @Getter
 @Setter
@@ -33,12 +32,19 @@ public class PostEntity {
     @Column(name = "image")
     private String image;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "location")
-    private Map<String, Object> location;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transport_type", nullable = false)
+    private TransportType transportType; // BUS / SUBWAY
 
+    @Column(name = "line_number", nullable = false)
+    private String lineNumber; // 2호선, 147
+
+    @Column(name = "station_name")
+    private String stationName; // nullable (선택)
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "issue_type", nullable = false)
-    private String issueType;
+    private IssueType issueType;
 
     @Column(name = "status")
     private String status;
@@ -50,4 +56,7 @@ public class PostEntity {
     @LastModifiedDate
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @Column(name = "view_count", nullable = false)
+    private Long viewCount = 0L;
 }

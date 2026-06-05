@@ -1,9 +1,8 @@
 package com.ruttu.project_02_backend.controller.routine;
 
 import com.ruttu.project_02_backend.config.CustomUserDetails;
+import com.ruttu.project_02_backend.dto.routine.live.DetourDto;
 import com.ruttu.project_02_backend.dto.routine.live.RoutineCompleteDto;
-import com.ruttu.project_02_backend.dto.routine.live.CurrentSectionDto;
-import com.ruttu.project_02_backend.dto.routine.location.CurrentLocationDto;
 import com.ruttu.project_02_backend.dto.routine.live.LiveRouteDto;
 import com.ruttu.project_02_backend.dto.routine.odsay.RouteDto;
 import com.ruttu.project_02_backend.dto.routine.routine.RouteListDto;
@@ -32,39 +31,6 @@ import java.util.List;
 public class LiveRouteController {
 
     private final LiveRouteService liveRouteService;
-
-    @Operation(
-            summary = "현재 단계 조회",
-            description = "도보중/대기중/탑승중 표시"
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "단계 조회 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = CurrentLocationDto.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "단계 조회 실패",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = Void.class)
-                    )
-            )
-    }
-    )
-    @GetMapping("/status")
-    public ResponseEntity<CurrentLocationDto> getRouteProgress(
-            Authentication auth
-    ) {
-        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        return ResponseEntity.ok(liveRouteService.getRouteProgress(user.getUserId()));
-    }
-
-
 
 
     @Operation(
@@ -95,7 +61,12 @@ public class LiveRouteController {
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        return ResponseEntity.ok(liveRouteService.getMyRoute(user.getUserId()));
+        Long userId = user.getUserId();
+
+        // 추가: incident 있으면 STOMP push
+        liveRouteService.sendIncidentsDetour(userId);
+
+        return ResponseEntity.ok(liveRouteService.getMyRoute(userId));
     }
 
 
@@ -125,12 +96,19 @@ public class LiveRouteController {
             )
     }
     )
+
+
     @GetMapping("/reco")
     public ResponseEntity<List<RouteListDto>> getRecommendedRoute(
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        return ResponseEntity.ok(liveRouteService.getRecommendedRoute(user.getUserId()));
+        Long userId = user.getUserId();
+
+        // 추가: incident 있으면 STOMP push
+        liveRouteService.sendIncidentsDetour(userId);
+
+        return ResponseEntity.ok(liveRouteService.getRecommendedRoute(userId));
     }
 
 
@@ -168,24 +146,22 @@ public class LiveRouteController {
     }
 
 
-
-
     @Operation(
-            summary = "실시간 이동 구간 조회(나의 경로)",
-            description = "현재 위치한 경로 구간 조회"
+            summary = "추천 우회 경로 상세 조회",
+            description = "추천 우회 경로 상세 조회"
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "구간 조회 성공",
+                    description = "경로 조회 성공",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = CurrentSectionDto.class)
+                            schema = @Schema(implementation = DetourDto.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "구간 조회 실패",
+                    description = "경로 조회 실패",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = Void.class)
@@ -193,15 +169,14 @@ public class LiveRouteController {
             )
     }
     )
-    @GetMapping("/location/my")
-    public ResponseEntity<CurrentSectionDto> getMyCurrentSection(
+    @GetMapping("/reco/detour/{pathId}")
+    public ResponseEntity<DetourDto> getDetour(
+            @PathVariable int pathId,
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        return ResponseEntity.ok(liveRouteService.getMyCurrentSection(user.getUserId()));
+        return ResponseEntity.ok(liveRouteService.getDetour(user.getUserId(), pathId));
     }
-
-
 
 
     @Operation(
@@ -237,24 +212,22 @@ public class LiveRouteController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-
-
     @Operation(
-            summary = "실시간 이동 구간 조회(추천 경로)",
-            description = "현재 위치한 경로 구간 조회"
+            summary = "추천 우회 경로 저장",
+            description = "실시간 추천 우회 경로 Redis에 저장(이 경로로 변경 클릭 시)"
     )
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "200",
-                    description = "구간 조회 성공",
+                    responseCode = "201",
+                    description = "경로 저장 성공",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = CurrentSectionDto.class)
+                            schema = @Schema(implementation = Void.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "구간 조회 실패",
+                    description = "저장 실패",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = Void.class)
@@ -262,15 +235,15 @@ public class LiveRouteController {
             )
     }
     )
-    @GetMapping("/location/reco")
-    public ResponseEntity<CurrentSectionDto> getRecoCurrentSection(
+    @PostMapping("/reco/detour/{pathId}")
+    public ResponseEntity<Void> saveDetourRoute(
+            @PathVariable int pathId,
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        return ResponseEntity.ok(liveRouteService.getRecoCurrentSection(user.getUserId()));
+        liveRouteService.saveDetourRoute(user.getUserId(), pathId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
-
-
 
 
     @Operation(
@@ -305,6 +278,7 @@ public class LiveRouteController {
         liveRouteService.myRoutecompleted(user.getUserId(),routineCompleteDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
 
 
 

@@ -3,9 +3,12 @@ package com.ruttu.project_02_backend.service.user;
 import com.ruttu.project_02_backend.config.CustomUserDetails;
 import com.ruttu.project_02_backend.dto.kakao.GeoResultDto;
 import com.ruttu.project_02_backend.dto.user.*;
+import com.ruttu.project_02_backend.entity.prod.routine.UserRoutineEntity;
 import com.ruttu.project_02_backend.entity.prod.user.UserAddressEntity;
 import com.ruttu.project_02_backend.exception.user.AddressNotFoundException;
 import com.ruttu.project_02_backend.exception.user.LoginRequiredException;
+import com.ruttu.project_02_backend.exception.user.RoutineInUseException;
+import com.ruttu.project_02_backend.repository.prod.routine.UserRoutineRepository;
 import com.ruttu.project_02_backend.repository.prod.user.UserAddressRepository;
 import com.ruttu.project_02_backend.service.kakao.KakaoGeoService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,8 @@ import java.util.List;
 public class AddressService {
     private final KakaoGeoService kakaoGeoService;
     private final UserAddressRepository userAddressRepository;
+    private final UserRoutineRepository userRoutineRepository;
+
     // 주소 생성
     public CreateAddressResponseDto createAddress(CreateAddressRequestDto createAddressRequestDto){
 
@@ -144,6 +149,11 @@ public class AddressService {
         UserAddressEntity userAddressEntity =
                 userAddressRepository.findByIdAndUserId(addressId, userId)
                         .orElseThrow(() -> new AddressNotFoundException("주소를 찾을 수 없습니다."));
+
+        // userRoutine에서 사용 중인지 확인
+        String alias = userAddressEntity.getAlias();
+        if(userRoutineRepository.existsByUserIdAndOriginAlias(userId, alias)) throw new RoutineInUseException("내 루틴에서 사용 중");
+        if(userRoutineRepository.existsByUserIdAndDestinationAlias(userId, alias)) throw new RoutineInUseException("내 루틴에서 사용 중");
 
         // 1. 별칭 수정
         if (request.getName() != null && !request.getName().isBlank()) {

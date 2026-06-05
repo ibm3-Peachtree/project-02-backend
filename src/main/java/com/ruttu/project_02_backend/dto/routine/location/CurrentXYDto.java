@@ -1,6 +1,5 @@
-package com.ruttu.project_02_backend.dto.routine.live;
+package com.ruttu.project_02_backend.dto.routine.location;
 
-import com.ruttu.project_02_backend.dto.routine.location.LiveLocationDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
