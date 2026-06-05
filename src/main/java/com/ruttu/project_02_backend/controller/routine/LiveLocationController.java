@@ -3,6 +3,7 @@ package com.ruttu.project_02_backend.controller.routine;
 import com.ruttu.project_02_backend.config.CustomUserDetails;
 import com.ruttu.project_02_backend.dto.routine.location.LiveLocationDto;
 import com.ruttu.project_02_backend.service.routine.LiveLocationService;
+import com.ruttu.project_02_backend.service.routine.LiveRouteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class LiveLocationController {
 
     private final LiveLocationService liveLocationService;
+    private final LiveRouteService liveRouteService;
+
     @Operation(
             summary = "나의 경로 조회",
             description = "나의 경로 조회"
@@ -37,6 +40,9 @@ public class LiveLocationController {
         liveLocationService.sendRouteProgress(
                 userId, liveLocationDto
         );
+
+        // 추가: incident 있으면 STOMP push
+        liveRouteService.sendIncidentsDetour(userId);
 
         // 나의 경로
         liveLocationService.getMyCurrentSection(
@@ -61,6 +67,9 @@ public class LiveLocationController {
         liveLocationService.sendRouteProgress(
                 userId, liveLocationDto
         );
+
+        // 추가: incident 있으면 STOMP push
+        liveRouteService.sendIncidentsDetour(userId);
 
         // 추천 경로
         liveLocationService.getRecoCurrentSection(

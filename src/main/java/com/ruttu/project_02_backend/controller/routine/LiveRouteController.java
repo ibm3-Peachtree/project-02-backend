@@ -61,7 +61,12 @@ public class LiveRouteController {
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        return ResponseEntity.ok(liveRouteService.getMyRoute(user.getUserId()));
+        Long userId = user.getUserId();
+
+        // 추가: incident 있으면 STOMP push
+        liveRouteService.sendIncidentsDetour(userId);
+
+        return ResponseEntity.ok(liveRouteService.getMyRoute(userId));
     }
 
 
@@ -91,6 +96,8 @@ public class LiveRouteController {
             )
     }
     )
+
+
     @GetMapping("/reco")
     public ResponseEntity<List<RouteListDto>> getRecommendedRoute(
             Authentication auth

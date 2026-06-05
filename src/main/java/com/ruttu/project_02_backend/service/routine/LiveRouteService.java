@@ -189,6 +189,48 @@ public class LiveRouteService {
         saveTodayRecoRouteAtRedis(userId, new LiveRouteDto(liveRouteForReportDto));
         saveTodayRecoXYAtRedis(userId, routeXYForReportDto);
     }
+    public DetourDto getDetour(Long userId, int pathId){
+        List<DetourDto> detourList = getDetourList(userId);
+        return detourList.get(pathId);
+    }
+    @Transactional(readOnly = true)
+    public void sendIncidentsDetour(Long userId){
+        try {
+            String incident = (String) redisTemplate.opsForValue()
+                    .get(getIncidentsKey(userId));
+
+            List<DetourDto> detourList = getDetourList(userId);
+            messagingTemplate.convertAndSendToUser(
+                    userId.toString(),
+                    "/queue/incident",
+                    incident
+            );
+
+            messagingTemplate.convertAndSendToUser(
+                    userId.toString(),
+                    "/queue/detour",
+                    detourList
+            );
+
+        }catch (IllegalStateException e){
+            log.debug("incident/detour 전송 스킵. userId={}", userId);
+        }
+
+    }
+
+    @Transactional(readOnly = true)
+    public List<DetourDto> getDetourList(Long userId){
+        return routineService.readJson(
+                (String) redisTemplate.opsForValue().get(getDetourKey(userId)),
+                new TypeReference<List<DetourDto>>() {}
+        );
+    }
+    private static String getIncidentsKey(Long userId) {
+        return "user:incidents:" + userId;
+    }
+    private static String getDetourKey(Long userId) {
+        return "routine:live:incident:full:" + userId;
+    }
 
     // 추천 경로 상세 조회
     @Transactional(readOnly = true)
@@ -255,45 +297,6 @@ public class LiveRouteService {
             return List.of();
         }
 
-    }
-
-
-    @Transactional(readOnly = true)
-    public void sendIncidentsDetour(Long userId){
-        try {
-            String incident = (String) redisTemplate.opsForValue()
-                    .get(getIncidentsKey(userId));
-
-            List<DetourDto> detourList = getDetourList(userId);
-            messagingTemplate.convertAndSendToUser(
-                    userId.toString(),
-                    "/queue/incident",
-                    incident
-            );
-
-            messagingTemplate.convertAndSendToUser(
-                    userId.toString(),
-                    "/queue/detour",
-                    detourList
-            );
-
-        }catch (IllegalStateException e){
-            log.debug("incident/detour 전송 스킵. userId={}", userId);
-        }
-
-    }
-
-    public DetourDto getDetour(Long userId, int pathId){
-        List<DetourDto> detourList = getDetourList(userId);
-        return detourList.get(pathId);
-    }
-
-    @Transactional(readOnly = true)
-    private List<DetourDto> getDetourList(Long userId){
-        return routineService.readJson(
-                (String) redisTemplate.opsForValue().get(getDetourKey(userId)),
-                new TypeReference<List<DetourDto>>() {}
-        );
     }
 
     @Transactional
@@ -425,13 +428,9 @@ public class LiveRouteService {
         return seconds < 0;
     }
 
-    private static String getDetourKey(Long userId) {
-        return "routine:live:incident:full:" + userId;
-    }
 
-    private static String getIncidentsKey(Long userId) {
-        return "user:incidents:" + userId;
-    }
+
+
 
     public String getLocationKey(Long userId){
         return "location:user:" + userId;

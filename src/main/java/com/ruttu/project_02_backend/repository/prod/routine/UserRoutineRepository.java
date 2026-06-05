@@ -16,6 +16,8 @@ public interface UserRoutineRepository extends JpaRepository<UserRoutineEntity, 
     );
 
     List<UserRoutineEntity>  findAllByUserId(Long userId);
+    boolean existsByUserIdAndOriginAlias(Long userId, String originAlias);
+    boolean existsByUserIdAndDestinationAlias(Long userId, String destinationAlias);
 
     void deleteByUserIdIn(List<Long> userIds);
 }

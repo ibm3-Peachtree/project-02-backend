@@ -1,8 +1,8 @@
 package com.ruttu.project_02_backend.service.routine;
 
+import com.ruttu.project_02_backend.dto.routine.live.*;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentSectionDto;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentXYDto;
-import com.ruttu.project_02_backend.dto.routine.live.RouteXYForReportDto;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentLocationDto;
 import com.ruttu.project_02_backend.dto.routine.location.LiveLocationDto;
 import com.ruttu.project_02_backend.dto.routine.odsay.RouteXYDto;
@@ -30,7 +30,6 @@ public class LiveLocationService {
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper mapper;
-
 
     @Transactional
     public void updateLocation(Long userId, LiveLocationDto liveLocationDto) {
