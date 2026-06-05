@@ -82,7 +82,11 @@ public class RoutineService {
         UserRoutineEntity routine = userRoutineRepository.findById(routineId)
                 .orElseThrow(() -> new RoutineNotFoundException("루틴 없음"));
 
-        saveUserRoutineEntity(routine, routineDto, userId);
+        // 🚫 주소 변경 금지 (핵심)
+        validateAddressNotChanged(routine, routineDto);
+
+        // ✔ 주소 제외하고 나머지만 업데이트
+        updateRoutineFields(routine, routineDto, userId);
     }
 
     // 내 루틴 조회
@@ -367,7 +371,50 @@ public class RoutineService {
                 });
     }
 
+    private void validateAddressNotChanged(UserRoutineEntity routine, RoutineDto dto) {
 
+        if (!routine.getOrigin().equals(dto.getOrigin())) {
+            throw new IllegalStateException("루틴의 출발 주소는 수정할 수 없습니다.");
+        }
+
+        if (!routine.getDestination().equals(dto.getDestination())) {
+            throw new IllegalStateException("루틴의 도착 주소는 수정할 수 없습니다.");
+        }
+    }
+
+    private void updateRoutineFields(UserRoutineEntity r, RoutineDto dto, Long userId) {
+
+        long dowMask = toBitMask(dto.getDow());
+
+        int recoId = dto.getRecoId();
+        RouteDto full = getFullRoute(recoId, userId);
+        List<RouteXYDto> xy = getXYList(recoId, userId);
+
+        int estimatedTime = full.getTotalTime();
+
+        LocalTime departureTime = getDepartureTime(
+                dto.getSpareTime(),
+                dto.getTargetArrivalTime(),
+                estimatedTime
+        );
+
+        // 🚫 origin / destination은 절대 수정 안 함
+
+        r.setRoutineName(dto.getRoutineName());
+        r.setOriginAlias(dto.getOriginAlias());
+        r.setDestinationAlias(dto.getDestinationAlias());
+
+        r.setTargetArrivalTime(dto.getTargetArrivalTime());
+        r.setPreferredDowMask(dowMask);
+        r.setPreferredRoute(full);
+        r.setPreferredRouteXy(xy);
+        r.setExcludeHoliday(dto.isExcludeHoliday());
+        r.setSpareTime(dto.getSpareTime());
+        r.setRecoDepartureTime(departureTime);
+        r.setEstimatedDurationMin(estimatedTime);
+
+        userRoutineRepository.save(r);
+    }
 
 
 }
