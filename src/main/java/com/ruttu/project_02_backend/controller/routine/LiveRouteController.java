@@ -62,9 +62,11 @@ public class LiveRouteController {
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
         Long userId = user.getUserId();
+        String principalName = auth.getName();
+
 
         // 추가: incident 있으면 STOMP push
-        liveRouteService.sendIncidentsDetour(userId);
+        liveRouteService.sendIncidentsDetour(userId, principalName);
 
         return ResponseEntity.ok(liveRouteService.getMyRoute(userId));
     }
@@ -104,9 +106,11 @@ public class LiveRouteController {
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
         Long userId = user.getUserId();
+        String principalName = auth.getName();
+
 
         // 추가: incident 있으면 STOMP push
-        liveRouteService.sendIncidentsDetour(userId);
+        liveRouteService.sendIncidentsDetour(userId, principalName);
 
         return ResponseEntity.ok(liveRouteService.getRecommendedRoute(userId));
     }

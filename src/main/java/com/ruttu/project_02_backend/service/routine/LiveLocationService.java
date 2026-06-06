@@ -42,7 +42,7 @@ public class LiveLocationService {
     }
 
     @Transactional(readOnly = true)
-    public void sendRouteProgress(Long userId, LiveLocationDto liveLocationDto) {
+    public void sendRouteProgress(String principalName, LiveLocationDto liveLocationDto) {
         CurrentLocationDto dto = new CurrentLocationDto();
         dto.setUpdatedAt(Instant.now().toEpochMilli());
 
@@ -52,21 +52,21 @@ public class LiveLocationService {
             dto.setStatus("대기중");
 
             messagingTemplate.convertAndSendToUser(
-                    userId.toString(),
+                    principalName,
                     "/queue/status",
                     dto
             );
         }
         dto.setStatus(getStatus(speed));
         messagingTemplate.convertAndSendToUser(
-                userId.toString(),
+                principalName,
                 "/queue/status",
                 dto
         );
     }
 
     @Transactional(readOnly = true)
-    public void getMyCurrentSection(Long userId, LiveLocationDto liveLocationDto){
+    public void getMyCurrentSection(Long userId, String principalName, LiveLocationDto liveLocationDto){
         CurrentXYDto xy = new CurrentXYDto(liveLocationDto);
         UserRoutineEntity routine = liveRouteService.getTodayRoutine(userId);
         if (routine == null) throw new RouteNotFoundException("루틴 없음");
@@ -76,6 +76,7 @@ public class LiveLocationService {
                         liveRouteService.getTodayMyXYKey(userId)),
                 new TypeReference<RouteXYForReportDto>() {}
         );
+        System.out.println("나의 경로 레디스 통과");
 
         // 가장 가까운 지점 = 현재 향하고 있는 목표 지점
         List<RouteXYDto> routeXYList = routeXY.getRouteXYDtoList();
@@ -90,9 +91,10 @@ public class LiveLocationService {
                                 routeXYList.get(i).getY(), routeXYList.get(i).getX())
                 ))
                 .orElse(-1);
-
-        messagingTemplate.convertAndSendToUser(
-                userId.toString(),
+        System.out.println("index: " + nearestIndex);
+        if (nearestIndex >= 0)
+            messagingTemplate.convertAndSendToUser(
+                    principalName,
                 "/queue/location/my",
                 new CurrentSectionDto(
                         nearestIndex,
@@ -104,7 +106,7 @@ public class LiveLocationService {
     }
 
     @Transactional(readOnly = true)
-    public void getRecoCurrentSection(Long userId, LiveLocationDto liveLocationDto){
+    public void getRecoCurrentSection(Long userId, String principalName, LiveLocationDto liveLocationDto){
         CurrentXYDto xy = new CurrentXYDto(liveLocationDto);
 
         List<RouteXYDto> routeXY = routineService.readJson(
@@ -112,6 +114,7 @@ public class LiveLocationService {
                         liveRouteService.getTodayRecoXYKey(userId)),
                 new TypeReference<List<RouteXYDto>>() {}
         );
+        System.out.println("추천 경로 레디스 통과");
 
         // 가장 가까운 지점 = 현재 향하고 있는 목표 지점
         double threshold = Math.max(xy.getAccuracy(), 100.0);
@@ -133,8 +136,11 @@ public class LiveLocationService {
                                 <= threshold
                 )
                 .orElse(-1);
-        messagingTemplate.convertAndSendToUser(
-                userId.toString(),
+        System.out.println("index: " + nearestIndex);
+
+        if (nearestIndex >= 0)
+            messagingTemplate.convertAndSendToUser(
+                    principalName,
                 "/queue/location/reco",
                 new CurrentSectionDto(
                         nearestIndex,

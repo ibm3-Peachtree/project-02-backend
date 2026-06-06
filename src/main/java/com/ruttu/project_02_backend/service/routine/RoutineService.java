@@ -82,6 +82,7 @@ public class RoutineService {
         UserRoutineEntity routine = userRoutineRepository.findById(routineId)
                 .orElseThrow(() -> new RoutineNotFoundException("루틴 없음"));
 
+        saveUserRoutineEntity(routine, routineDto, userId);
     }
 
     // 내 루틴 조회
