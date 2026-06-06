@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @SecurityRequirement(name="JWT")
 @Tag(name = "Location API", description = "위치 관리 API")
 @Controller
-@RequestMapping("/me/routines/location")
 @RequiredArgsConstructor
 public class LiveLocationController {
 
@@ -28,25 +27,26 @@ public class LiveLocationController {
             summary = "나의 경로 조회",
             description = "나의 경로 조회"
     )
-    @MessageMapping("/my")
+    @MessageMapping("/location/my")
     public void myLocation(
             LiveLocationDto liveLocationDto,
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
         Long userId = user.getUserId();
+        String principalName = auth.getName();
 
         // 상태
         liveLocationService.sendRouteProgress(
-                userId, liveLocationDto
+                principalName, liveLocationDto
         );
 
         // 추가: incident 있으면 STOMP push
-        liveRouteService.sendIncidentsDetour(userId);
+        liveRouteService.sendIncidentsDetour(userId, principalName);
 
         // 나의 경로
         liveLocationService.getMyCurrentSection(
-                userId, liveLocationDto
+                userId, principalName, liveLocationDto
         );
 
         // 저장
@@ -55,25 +55,26 @@ public class LiveLocationController {
     }
 
 
-    @MessageMapping("/reco")
+    @MessageMapping("/location/reco")
     public void recoLocation(
             LiveLocationDto liveLocationDto,
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
         Long userId = user.getUserId();
+        String principalName = auth.getName();
 
         // 상태
         liveLocationService.sendRouteProgress(
-                userId, liveLocationDto
+                principalName, liveLocationDto
         );
 
         // 추가: incident 있으면 STOMP push
-        liveRouteService.sendIncidentsDetour(userId);
+        liveRouteService.sendIncidentsDetour(userId, principalName);
 
         // 추천 경로
         liveLocationService.getRecoCurrentSection(
-                userId, liveLocationDto
+                userId, principalName, liveLocationDto
         );
 
         // 저장

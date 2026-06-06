@@ -194,20 +194,20 @@ public class LiveRouteService {
         return detourList.get(pathId);
     }
     @Transactional(readOnly = true)
-    public void sendIncidentsDetour(Long userId){
+    public void sendIncidentsDetour(Long userId, String principalName){
         try {
             String incident = (String) redisTemplate.opsForValue()
                     .get(getIncidentsKey(userId));
 
             List<DetourDto> detourList = getDetourList(userId);
             messagingTemplate.convertAndSendToUser(
-                    userId.toString(),
+                    principalName,
                     "/queue/incident",
                     incident
             );
 
             messagingTemplate.convertAndSendToUser(
-                    userId.toString(),
+                    principalName,
                     "/queue/detour",
                     detourList
             );
