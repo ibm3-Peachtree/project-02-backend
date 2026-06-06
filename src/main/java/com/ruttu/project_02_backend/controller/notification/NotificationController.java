@@ -5,6 +5,7 @@ import com.ruttu.project_02_backend.dto.notification.NotificationDto;
 import com.ruttu.project_02_backend.service.notification.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,6 +16,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/notifications")
+@Tag(name = "Notification API", description = "알림 관리 API")
 public class NotificationController {
     private final NotificationService notificationService;
 

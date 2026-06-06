@@ -3,16 +3,20 @@ package com.ruttu.project_02_backend.entity.prod.feed;
 import com.ruttu.project_02_backend.entity.prod.feed.enumtype.IssueType;
 import com.ruttu.project_02_backend.entity.prod.feed.enumtype.TransportType;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "posts")
 public class PostEntity {
     @Id
@@ -57,6 +61,7 @@ public class PostEntity {
     @Column(name = "updated_at")
     private Instant updatedAt;
 
+    @Builder.Default
     @Column(name = "view_count", nullable = false)
     private Long viewCount = 0L;
 }
