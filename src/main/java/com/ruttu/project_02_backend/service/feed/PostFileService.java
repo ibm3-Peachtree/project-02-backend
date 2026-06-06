@@ -13,7 +13,7 @@ import java.util.UUID;
 @Service
 public class PostFileService {
     private static final String DIR = "uploads/post/";
-
+    // 이미지 저장
     public String saveFile(MultipartFile file) {
         if (file == null || file.isEmpty()) return null;
 
@@ -31,5 +31,22 @@ public class PostFileService {
             throw new FileUploadException("파일 저장 실패");
         }
         return "/uploads/post/" + fileName;
+    }
+    // 이미지 삭제
+    public void deleteFile(String imageUrl) {
+
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return;
+        }
+
+        try {
+            String fileName = imageUrl.replace("/uploads/post/", "");
+            Path path = Paths.get(DIR + fileName);
+
+            Files.deleteIfExists(path);
+
+        } catch (IOException e) {
+            throw new RuntimeException("파일 삭제 실패", e);
+        }
     }
 }

@@ -15,4 +15,25 @@ public class FeedGlobalExceptionHandler {
         problemDetail.setDetail(fileUploadException.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(problemDetail);
     }
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<ProblemDetail> postNotFoundHandler(PostNotFoundException postNotFoundException){
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problemDetail.setTitle("게시글 없음");
+        problemDetail.setDetail(postNotFoundException.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
+    }
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> accessDeniedHandler(AccessDeniedException accessDeniedException){
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        problemDetail.setTitle("권한 없음");
+        problemDetail.setDetail(accessDeniedException.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
+    }
+    @ExceptionHandler(InvalidImageFormatException.class)
+    public ResponseEntity<ProblemDetail> invalidImageHandler(InvalidImageFormatException invalidImageFormatException){
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problemDetail.setTitle("잘못된 형식");
+        problemDetail.setDetail(invalidImageFormatException.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
+    }
 }

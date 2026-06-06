@@ -128,7 +128,7 @@ public class AuthService {
                     .nickname(userEntity.getNickname())
                     .build();
         }catch(Exception e){
-            throw new RuntimeException("로그인 실패");
+            throw new RuntimeException("로그인 실패", e);
         }
     }
     //자동 회원가입
@@ -147,6 +147,10 @@ public class AuthService {
                 .updatedAt(Instant.now())
                 .role("USER")
                 .status("ACTIVE")
+                .departureAlert(false)
+                .alightingAlert(false)
+                .ttsEnabled(false)
+                .briefingAlert(false)
                 .build();
 
         return userRepository.save(userEntity);
