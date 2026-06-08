@@ -254,7 +254,7 @@ public class LiveRouteService {
     ) {
 
         // 주소를 조회하여 lat, lng 값 가져오기
-        UserRoutineEntity routine = getTodayRoutine(routineId);
+        UserRoutineEntity routine = getRoutine(routineId);
 
         OdsayXYDto xy = odsayIOService.getOdsayXyByAlias(
                 userId, routine.getOriginAlias(), routine.getDestinationAlias());

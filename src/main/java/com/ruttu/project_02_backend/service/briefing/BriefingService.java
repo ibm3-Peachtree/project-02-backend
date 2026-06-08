@@ -36,8 +36,8 @@ public class BriefingService {
         UserAddressEntity userAddress = userAddressRepository.findByUserIdAndAlias(userId, address);
         double lat = userAddress.getLat().doubleValue();
         double lng = userAddress.getLng().doubleValue();
-
-        return getWeather(userId, lat, lng);
+        String locationName = userAddress.getAlias();
+        return getWeather(userId, lat, lng, locationName);
     }
 
     public ResponseWeatherDto getDestinationWeather(Long userId){
@@ -46,11 +46,11 @@ public class BriefingService {
         UserAddressEntity userAddress = userAddressRepository.findByUserIdAndAlias(userId, address);
         double lat = userAddress.getLat().doubleValue();
         double lng = userAddress.getLng().doubleValue();
-
-        return getWeather(userId, lat, lng);
+        String locationName = userAddress.getAlias();
+        return getWeather(userId, lat, lng, locationName);
     }
 
-    private ResponseWeatherDto getWeather(Long userId, double lat, double lng) {
+    private ResponseWeatherDto getWeather(Long userId, double lat, double lng, String locationName) {
         LocalDateTime today = LocalDateTime.now();
         String date = today.format(DateTimeFormatter.BASIC_ISO_DATE);
         String hour = String.format("%02d", today.getHour());
@@ -135,7 +135,7 @@ public class BriefingService {
                 supplies = geminiService.generate(lat, lng, date, prompt);
             }
 
-            return new ResponseWeatherDto(todayWeather, supplies);
+            return new ResponseWeatherDto(locationName, todayWeather, supplies);
 
         } catch (IllegalStateException e) {
             return null;  // ✅ 컨트롤러에서 204 처리

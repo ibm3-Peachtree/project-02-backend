@@ -10,6 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ResponseWeatherDto {
+    private String locationName;
     private double tmp; // 현재 기온
     private double minTemp; // 최저 기온
     private double maxTemp; // 최고 기온
@@ -20,7 +21,8 @@ public class ResponseWeatherDto {
     private String clothes; // 옷차림
     private String supplies; // 준비물
 
-    public ResponseWeatherDto(TodayWeatherAirQualityDto weather, GeminiResultDto supplies){
+    public ResponseWeatherDto(String locationName, TodayWeatherAirQualityDto weather, GeminiResultDto supplies){
+        this.setLocationName(locationName);
         this.setTmp(weather.getTmp());
         this.setMinTemp(weather.getMinTemp());
         this.setMaxTemp(weather.getMaxTemp());
