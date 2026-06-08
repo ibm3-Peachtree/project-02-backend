@@ -18,7 +18,7 @@ public class FirebaseConfig {
 
         InputStream inputStream =
                 new ClassPathResource(
-                        "../resources/firebase-admin.json"
+                        "firebase-admin.json"
                 ).getInputStream();
 
         FirebaseOptions options =
