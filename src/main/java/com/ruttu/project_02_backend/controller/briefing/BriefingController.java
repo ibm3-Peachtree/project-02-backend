@@ -58,12 +58,48 @@ public class BriefingController {
             )
     }
     )
-    @GetMapping("/weather")
-    public ResponseEntity<ResponseWeatherDto> getWeather(
+    @GetMapping("/weather/origin")
+    public ResponseEntity<ResponseWeatherDto> getOriginWeather(
             Authentication auth
-    ){
+    ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        return ResponseEntity.ok(briefingService.getWeather(user.getUserId()));
+        ResponseWeatherDto result = briefingService.getOriginWeather(user.getUserId());
+        if (result == null) return ResponseEntity.noContent().build(); // 204
+        return ResponseEntity.ok(result);
+    }
+
+    // 날씨
+    @Operation(
+            summary = "날씨 조회",
+            description = "날씨, 미세먼지, 준비물 조회"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "날씨 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ResponseWeatherDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "날씨 조회 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            )
+    }
+    )
+    @GetMapping("/weather/destination")
+    public ResponseEntity<ResponseWeatherDto> getDestinationWeather(
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        ResponseWeatherDto result = briefingService.getDestinationWeather(user.getUserId());
+        if (result == null) return ResponseEntity.noContent().build(); // 204
+        return ResponseEntity.ok(result);
     }
 
     // 일정

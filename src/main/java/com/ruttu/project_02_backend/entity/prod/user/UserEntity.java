@@ -39,6 +39,10 @@ public class UserEntity {
     @Column(name = "status")
     private String status;
 
+    // 앱 푸시 토큰
+    @Column(name = "app_push_token")
+    private String appPushToken;
+
     // -- 알림 설정 프론트하고 맞춰서 이름 변경 --
     // 🚍 출발 알림
     @Column(name = "departure_alert", nullable = false)

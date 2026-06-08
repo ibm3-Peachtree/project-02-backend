@@ -529,22 +529,21 @@ public class LiveRouteService {
         redisTemplate.opsForValue().set(key, json);
     }
 
-    public UserRoutineEntity getTodayRoutine(Long routineId){
+    public UserRoutineEntity getRoutine(Long routineId){
         return userRoutineRepository.findById(routineId)
                 .orElse(null);
     }
 
-
-//    public UserRoutineEntity getTodayRoutine(Long userId){
-//        return userRoutineRepository.findAllByUserId(userId)
-//                .stream()
-//                .filter(r -> isToday(r.getPreferredDowMask()))
-//                .min(Comparator.comparingInt(item ->
-//                        Math.abs(LocalTime.now(KST).toSecondOfDay()
-//                                - item.getRecoDepartureTime().toSecondOfDay())
-//                ))
-//                .orElse(null);
-//    }
+    public UserRoutineEntity getTodayRoutine(Long userId){
+        return userRoutineRepository.findAllByUserId(userId)
+                .stream()
+                .filter(r -> isToday(r.getPreferredDowMask()))
+                .min(Comparator.comparingInt(item ->
+                        Math.abs(LocalTime.now(KST).toSecondOfDay()
+                                - item.getRecoDepartureTime().toSecondOfDay())
+                ))
+                .orElse(null);
+    }
 
     private boolean isToday(long mask) {
         int todayIndex = LocalDate.now(KST).getDayOfWeek().getValue() - 1;

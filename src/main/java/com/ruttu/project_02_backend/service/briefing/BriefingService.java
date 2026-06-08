@@ -2,6 +2,9 @@ package com.ruttu.project_02_backend.service.briefing;
 
 import com.ruttu.project_02_backend.dto.briefing.*;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentXYDto;
+import com.ruttu.project_02_backend.entity.prod.routine.UserRoutineEntity;
+import com.ruttu.project_02_backend.entity.prod.user.UserAddressEntity;
+import com.ruttu.project_02_backend.repository.prod.user.UserAddressRepository;
 import com.ruttu.project_02_backend.service.routine.LiveRouteService;
 import com.ruttu.project_02_backend.service.routine.RoutineService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +12,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.type.TypeReference;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -20,74 +24,87 @@ public class BriefingService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     private final RoutineService routineService;
-
     private final LiveRouteService liveRouteService;
     private final GeminiService geminiService;
 
+    private final UserAddressRepository userAddressRepository;
 
-    public ResponseWeatherDto getWeather(Long userId){
+
+    public ResponseWeatherDto getOriginWeather(Long userId){
+        String address = liveRouteService.getTodayRoutine(userId)
+                .getOriginAlias();
+        UserAddressEntity userAddress = userAddressRepository.findByUserIdAndAlias(userId, address);
+        double lat = userAddress.getLat().doubleValue();
+        double lng = userAddress.getLng().doubleValue();
+
+        return getWeather(userId, lat, lng);
+    }
+
+    public ResponseWeatherDto getDestinationWeather(Long userId){
+        String address = liveRouteService.getTodayRoutine(userId)
+                .getDestinationAlias();
+        UserAddressEntity userAddress = userAddressRepository.findByUserIdAndAlias(userId, address);
+        double lat = userAddress.getLat().doubleValue();
+        double lng = userAddress.getLng().doubleValue();
+
+        return getWeather(userId, lat, lng);
+    }
+
+    private ResponseWeatherDto getWeather(Long userId, double lat, double lng) {
         LocalDateTime today = LocalDateTime.now();
         String date = today.format(DateTimeFormatter.BASIC_ISO_DATE);
         String hour = String.format("%02d", today.getHour());
-        // 현재 위치 조회
-        CurrentXYDto latlng = routineService.readJson(
-                (String) redisTemplate.opsForList().index(liveRouteService.getLocationKey(userId), -1),
-                CurrentXYDto.class
-        );
 
-        // 오늘의 날씨(tmp: 현재, 최저, 최고), (sky), (pcp)
-        String weatherKey = getWeatherKey(latlng.getLatitude(), latlng.getLongitude(), date);
-        Set<String> keys = redisTemplate.keys(weatherKey + ":*");
-        List<WeatherDto> weathers = keys.stream()
-                .map(key -> routineService.readJson(
-                        (String) redisTemplate.opsForValue().get(key),
-                        WeatherDto.class
-                ))
-                .toList();
-        WeatherDto weatherInfo =  routineService.readJson(
-                (String) redisTemplate.opsForValue().get(weatherKey + ":" + hour),
-                WeatherDto.class
-        );
-        double minTemp = weathers.stream()
-                .map(WeatherDto::getTMP)
-                .filter(s -> s != null && !s.isBlank())
-                .mapToDouble(Double::parseDouble)
-                .min()
-                .orElse(0);
-
-        double maxTemp = weathers.stream()
-                .map(WeatherDto::getTMP)
-                .filter(s -> s != null && !s.isBlank())
-                .mapToDouble(Double::parseDouble)
-                .max()
-                .orElse(0);
-
-
-        // 미세먼지 pm10:seoul, pm25:seoul
-        AirQualityDto airQuality = routineService.readJson(
-                (String) redisTemplate.opsForValue().get(getPmKey(date)),
-                new TypeReference<AirQualityDto>() {}
-        );
-
-        TodayWeatherAirQualityDto todayWeather = new TodayWeatherAirQualityDto(
-                Double.parseDouble(weatherInfo.getTMP()),
-                minTemp,
-                maxTemp,
-                weatherInfo.getSKY(),
-                weatherInfo.getPCP(),
-                airQuality.getPm10().getSeoul(),
-                airQuality.getPm25().getSeoul()
-        );
+        TodayWeatherAirQualityDto todayWeather;
         GeminiResultDto supplies;
 
         try {
-            supplies = routineService.readJson(
-                    (String) redisTemplate.opsForValue()
-                            .get(geminiService.getSuppliesKey(latlng.getLatitude(), latlng.getLongitude(), date)),
-                    GeminiResultDto.class
+
+
+            String weatherKey = getWeatherKey(lat, lng, date);
+            Set<String> keys = redisTemplate.keys(weatherKey + ":*");
+            List<WeatherDto> weathers = keys.stream()
+                    .map(key -> routineService.readJson(
+                            (String) redisTemplate.opsForValue().get(key),
+                            WeatherDto.class
+                    ))
+                    .toList();
+            System.out.println("weather key: "+weatherKey + ":" + hour);
+            WeatherDto weatherInfo = routineService.readJson(
+                    (String) redisTemplate.opsForValue().get(weatherKey + ":" + hour),
+                    WeatherDto.class
             );
-        } catch (IllegalStateException e) {
-            String prompt = """
+            double minTemp = weathers.stream()
+                    .map(WeatherDto::getTMP)
+                    .filter(s -> s != null && !s.isBlank())
+                    .mapToDouble(Double::parseDouble)
+                    .min().orElse(0);
+            double maxTemp = weathers.stream()
+                    .map(WeatherDto::getTMP)
+                    .filter(s -> s != null && !s.isBlank())
+                    .mapToDouble(Double::parseDouble)
+                    .max().orElse(0);
+
+            AirQualityDto airQuality = routineService.readJson(
+                    (String) redisTemplate.opsForValue().get(getPmKey(date)),
+                    new TypeReference<AirQualityDto>() {}
+            );
+
+            todayWeather = new TodayWeatherAirQualityDto(
+                    Double.parseDouble(weatherInfo.getTMP()),
+                    minTemp, maxTemp,
+                    weatherInfo.getSKY(), weatherInfo.getPCP(),
+                    airQuality.getPm10().getSeoul(), airQuality.getPm25().getSeoul()
+            );
+
+            try {
+                supplies = routineService.readJson(
+                        (String) redisTemplate.opsForValue()
+                                .get(geminiService.getSuppliesKey(lat, lng, date)),
+                        GeminiResultDto.class
+                );
+            } catch (IllegalStateException e) {  // ✅ 타입 명시
+                String prompt = """
             현재 날씨 정보:
             온도: %.1f℃
             최저온도: %.1f℃
@@ -107,23 +124,22 @@ public class BriefingService {
               "supplies": "준비물 추천"
             }
             """.formatted(
-                    todayWeather.getTmp(),
-                    todayWeather.getMinTemp(),
-                    todayWeather.getMaxTemp(),
-                    todayWeather.getSky(),
-                    todayWeather.getPcp(),
-                    todayWeather.getPm10(),
-                    todayWeather.getPm25()
-            );
+                        todayWeather.getTmp(),
+                        todayWeather.getMinTemp(),
+                        todayWeather.getMaxTemp(),
+                        todayWeather.getSky(),
+                        todayWeather.getPcp(),
+                        todayWeather.getPm10(),
+                        todayWeather.getPm25()
+                );
+                supplies = geminiService.generate(lat, lng, date, prompt);
+            }
 
-            supplies = geminiService.generate(latlng.getLatitude(), latlng.getLongitude(), date, prompt);
+            return new ResponseWeatherDto(todayWeather, supplies);
+
+        } catch (IllegalStateException e) {
+            return null;  // ✅ 컨트롤러에서 204 처리
         }
-
-        return new ResponseWeatherDto(
-                todayWeather,
-                supplies
-        );
-
     }
 
 

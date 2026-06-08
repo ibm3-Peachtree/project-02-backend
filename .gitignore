@@ -41,3 +41,4 @@ out/
 **/key-bastion.pem
 **/*.env
 **/*.yaml
+**/*.json

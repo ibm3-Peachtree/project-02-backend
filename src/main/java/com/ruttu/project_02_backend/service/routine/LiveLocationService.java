@@ -68,7 +68,7 @@ public class LiveLocationService {
     @Transactional(readOnly = true)
     public void getMyCurrentSection(Long userId, String principalName, LiveLocationDto liveLocationDto){
         CurrentXYDto xy = new CurrentXYDto(liveLocationDto);
-        UserRoutineEntity routine = liveRouteService.getTodayRoutine(userId);
+        UserRoutineEntity routine = liveRouteService.getRoutine(userId);
         if (routine == null) throw new RouteNotFoundException("루틴 없음");
 
         RouteXYForReportDto routeXY = routineService.readJson(
