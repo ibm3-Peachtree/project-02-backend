@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -22,6 +24,8 @@ public class LiveLocationController {
 
     private final LiveLocationService liveLocationService;
     private final LiveRouteService liveRouteService;
+    private static final Logger log =
+            LoggerFactory.getLogger(LiveRouteService.class);
 
     @Operation(
             summary = "나의 경로 조회",
@@ -41,8 +45,12 @@ public class LiveLocationController {
                 principalName, liveLocationDto
         );
 
-        // 추가: incident 있으면 STOMP push
-        liveRouteService.sendIncidentsDetour(userId, principalName);
+        // STOMP push는 이후에 (실패해도 응답에 영향 없도록)
+        try {
+            liveRouteService.sendIncidentsDetour(userId, principalName);
+        } catch (Exception e) {
+            log.debug("sendIncidentsDetour 실패, 응답은 정상 반환. userId={}", userId);
+        }
 
         // 나의 경로
         liveLocationService.getMyCurrentSection(
@@ -69,8 +77,12 @@ public class LiveLocationController {
                 principalName, liveLocationDto
         );
 
-        // 추가: incident 있으면 STOMP push
-        liveRouteService.sendIncidentsDetour(userId, principalName);
+        // STOMP push는 이후에 (실패해도 응답에 영향 없도록)
+        try {
+            liveRouteService.sendIncidentsDetour(userId, principalName);
+        } catch (Exception e) {
+            log.debug("sendIncidentsDetour 실패, 응답은 정상 반환. userId={}", userId);
+        }
 
         // 추천 경로
         liveLocationService.getRecoCurrentSection(

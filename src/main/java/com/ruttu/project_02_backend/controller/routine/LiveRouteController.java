@@ -16,6 +16,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -31,7 +33,8 @@ import java.util.List;
 public class LiveRouteController {
 
     private final LiveRouteService liveRouteService;
-
+    private static final Logger log =
+            LoggerFactory.getLogger(LiveRouteService.class);
 
     @Operation(
             summary = "나의 경로 조회",
@@ -56,19 +59,25 @@ public class LiveRouteController {
             )
     }
     )
-    @GetMapping("/route")
+    @GetMapping("/route/{routineId}")
     public ResponseEntity<LiveRouteDto> getMyRoute(
+            @PathVariable Long routineId,
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
         Long userId = user.getUserId();
         String principalName = auth.getName();
 
+        LiveRouteDto result = liveRouteService.getMyRoute(userId, routineId);
 
-        // 추가: incident 있으면 STOMP push
-        liveRouteService.sendIncidentsDetour(userId, principalName);
+        // STOMP push는 이후에 (실패해도 응답에 영향 없도록)
+        try {
+            liveRouteService.sendIncidentsDetour(userId, principalName);
+        } catch (Exception e) {
+            log.debug("sendIncidentsDetour 실패, 응답은 정상 반환. userId={}", userId);
+        }
 
-        return ResponseEntity.ok(liveRouteService.getMyRoute(userId));
+        return ResponseEntity.ok(result);
     }
 
 
@@ -98,21 +107,26 @@ public class LiveRouteController {
             )
     }
     )
-
-
-    @GetMapping("/reco")
+    @GetMapping("/reco/{routineId}")
     public ResponseEntity<List<RouteListDto>> getRecommendedRoute(
+            @PathVariable Long routineId,
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
         Long userId = user.getUserId();
         String principalName = auth.getName();
 
+        // 경로 먼저 조회
+        List<RouteListDto> result = liveRouteService.getRecommendedRoute(userId, routineId);
 
-        // 추가: incident 있으면 STOMP push
-        liveRouteService.sendIncidentsDetour(userId, principalName);
+        // STOMP push는 이후에 (실패해도 응답에 영향 없도록)
+        try {
+            liveRouteService.sendIncidentsDetour(userId, principalName);
+        } catch (Exception e) {
+            log.debug("sendIncidentsDetour 실패, 응답은 정상 반환. userId={}", userId);
+        }
 
-        return ResponseEntity.ok(liveRouteService.getRecommendedRoute(userId));
+        return ResponseEntity.ok(result);
     }
 
 
@@ -140,7 +154,7 @@ public class LiveRouteController {
             )
     }
     )
-    @GetMapping("/reco/{recoId}")
+    @GetMapping("/reco/detail/{recoId}")
     public ResponseEntity<RouteDto> getRecommendedRouteDetail(
             @PathVariable int recoId,
             Authentication auth
@@ -206,7 +220,7 @@ public class LiveRouteController {
             )
     }
     )
-    @PostMapping("/reco/{recoId}")
+    @PostMapping("/reco/detail/{recoId}")
     public ResponseEntity<Void> saveRecommendedRoute(
             @PathVariable int recoId,
             Authentication auth

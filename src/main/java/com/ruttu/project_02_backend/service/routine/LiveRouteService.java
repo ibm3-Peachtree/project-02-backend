@@ -46,8 +46,8 @@ public class LiveRouteService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Transactional
-    public LiveRouteDto getMyRoute(Long userId) {
-        UserRoutineEntity routine = getTodayRoutine(userId);
+    public LiveRouteDto getMyRoute(Long userId, Long routineId) {
+        UserRoutineEntity routine = getTodayRoutine(routineId);
 
         // routine 없으면 null 반환
         if (routine == null) return null;
@@ -200,22 +200,27 @@ public class LiveRouteService {
                     .get(getIncidentsKey(userId));
 
             List<DetourDto> detourList = getDetourList(userId);
-            messagingTemplate.convertAndSendToUser(
-                    principalName,
-                    "/queue/incident",
-                    incident
-            );
 
-            messagingTemplate.convertAndSendToUser(
-                    principalName,
-                    "/queue/detour",
-                    detourList
-            );
+            // null이면 전송 스킵
+            if (incident != null) {
+                messagingTemplate.convertAndSendToUser(
+                        principalName,
+                        "/queue/incident",
+                        incident
+                );
+            }
 
-        }catch (IllegalStateException e){
+            if (detourList != null && !detourList.isEmpty()) {
+                messagingTemplate.convertAndSendToUser(
+                        principalName,
+                        "/queue/detour",
+                        detourList
+                );
+            }
+
+        } catch (Exception e) {  // IllegalStateException → Exception으로 확장
             log.debug("incident/detour 전송 스킵. userId={}", userId);
         }
-
     }
 
     @Transactional(readOnly = true)
@@ -244,11 +249,12 @@ public class LiveRouteService {
     // 추천 경로 목록 조회
     @Transactional(readOnly = true)
     public List<RouteListDto> getRecommendedRoute(
-            Long userId
+            Long userId,
+            Long routineId
     ) {
 
         // 주소를 조회하여 lat, lng 값 가져오기
-        UserRoutineEntity routine = getTodayRoutine(userId);
+        UserRoutineEntity routine = getTodayRoutine(routineId);
 
         OdsayXYDto xy = odsayIOService.getOdsayXyByAlias(
                 userId, routine.getOriginAlias(), routine.getDestinationAlias());
@@ -523,16 +529,22 @@ public class LiveRouteService {
         redisTemplate.opsForValue().set(key, json);
     }
 
-    public UserRoutineEntity getTodayRoutine(Long userId){
-        return userRoutineRepository.findAllByUserId(userId)
-                .stream()
-                .filter(r -> isToday(r.getPreferredDowMask()))
-                .min(Comparator.comparingInt(item ->
-                        Math.abs(LocalTime.now(KST).toSecondOfDay()
-                                - item.getRecoDepartureTime().toSecondOfDay())
-                ))
+    public UserRoutineEntity getTodayRoutine(Long routineId){
+        return userRoutineRepository.findById(routineId)
                 .orElse(null);
     }
+
+
+//    public UserRoutineEntity getTodayRoutine(Long userId){
+//        return userRoutineRepository.findAllByUserId(userId)
+//                .stream()
+//                .filter(r -> isToday(r.getPreferredDowMask()))
+//                .min(Comparator.comparingInt(item ->
+//                        Math.abs(LocalTime.now(KST).toSecondOfDay()
+//                                - item.getRecoDepartureTime().toSecondOfDay())
+//                ))
+//                .orElse(null);
+//    }
 
     private boolean isToday(long mask) {
         int todayIndex = LocalDate.now(KST).getDayOfWeek().getValue() - 1;
