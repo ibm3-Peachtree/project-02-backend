@@ -1,8 +1,6 @@
 package com.ruttu.project_02_backend.service.briefing;
 
 import com.ruttu.project_02_backend.dto.briefing.*;
-import com.ruttu.project_02_backend.dto.routine.location.CurrentXYDto;
-import com.ruttu.project_02_backend.entity.prod.routine.UserRoutineEntity;
 import com.ruttu.project_02_backend.entity.prod.user.UserAddressEntity;
 import com.ruttu.project_02_backend.repository.prod.user.UserAddressRepository;
 import com.ruttu.project_02_backend.service.routine.LiveRouteService;
@@ -12,7 +10,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.type.TypeReference;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -29,7 +26,6 @@ public class BriefingService {
 
     private final UserAddressRepository userAddressRepository;
 
-
     public ResponseWeatherDto getOriginWeather(Long userId){
         String address = liveRouteService.getTodayRoutine(userId)
                 .getOriginAlias();
@@ -37,7 +33,7 @@ public class BriefingService {
         double lat = userAddress.getLat().doubleValue();
         double lng = userAddress.getLng().doubleValue();
         String locationName = userAddress.getAlias();
-        return getWeather(userId, lat, lng, locationName);
+        return getWeather(lat, lng, locationName);
     }
 
     public ResponseWeatherDto getDestinationWeather(Long userId){
@@ -47,20 +43,17 @@ public class BriefingService {
         double lat = userAddress.getLat().doubleValue();
         double lng = userAddress.getLng().doubleValue();
         String locationName = userAddress.getAlias();
-        return getWeather(userId, lat, lng, locationName);
+        return getWeather(lat, lng, locationName);
     }
 
-    private ResponseWeatherDto getWeather(Long userId, double lat, double lng, String locationName) {
+    private ResponseWeatherDto getWeather(double lat, double lng, String locationName) {
         LocalDateTime today = LocalDateTime.now();
         String date = today.format(DateTimeFormatter.BASIC_ISO_DATE);
         String hour = String.format("%02d", today.getHour());
 
         TodayWeatherAirQualityDto todayWeather;
-        GeminiResultDto supplies;
 
         try {
-
-
             String weatherKey = getWeatherKey(lat, lng, date);
             Set<String> keys = redisTemplate.keys(weatherKey + ":*");
             List<WeatherDto> weathers = keys.stream()
@@ -97,15 +90,46 @@ public class BriefingService {
                     airQuality.getPm10().getSeoul(), airQuality.getPm25().getSeoul()
             );
 
-            try {
-                supplies = routineService.readJson(
-                        (String) redisTemplate.opsForValue()
-                                .get(geminiService.getSuppliesKey(lat, lng, date)),
-                        GeminiResultDto.class
-                );
-            } catch (IllegalStateException e) {  // ✅ 타입 명시
-                String prompt = """
-            현재 날씨 정보:
+
+
+            return new ResponseWeatherDto(locationName, todayWeather);
+
+        } catch (IllegalStateException e) {
+            return null;  // ✅ 컨트롤러에서 204 처리
+        }
+    }
+
+    public GeminiSuppliesResultDto getSupplies(Long userId){
+        LocalDateTime today = LocalDateTime.now();
+        String date = today.format(DateTimeFormatter.BASIC_ISO_DATE);
+
+        Long routineId = liveRouteService.getTodayRoutine(userId)
+                .getId();
+        ResponseWeatherDto originWeather = getOriginWeather(userId);
+        ResponseWeatherDto destinationWeather = getDestinationWeather(userId);
+        String key = getSuppliesKey(routineId, date);
+
+        try{
+
+            return routineService.readJson(
+                    (String) redisTemplate.opsForValue()
+                            .get(key),
+                    GeminiSuppliesResultDto.class
+            );
+
+        } catch (IllegalStateException e) {
+            // ✅ 타입 명시
+            String prompt = """
+            %s의 현재 날씨 정보:
+            온도: %.1f℃
+            최저온도: %.1f℃
+            최고온도: %.1f℃
+            구름: %s
+            강수량: %s
+            미세먼지: %s
+            초미세먼지: %s
+            
+            %s의 현재 날씨 정보:
             온도: %.1f℃
             최저온도: %.1f℃
             최고온도: %.1f℃
@@ -124,34 +148,79 @@ public class BriefingService {
               "supplies": "준비물 추천"
             }
             """.formatted(
-                        todayWeather.getTmp(),
-                        todayWeather.getMinTemp(),
-                        todayWeather.getMaxTemp(),
-                        todayWeather.getSky(),
-                        todayWeather.getPcp(),
-                        todayWeather.getPm10(),
-                        todayWeather.getPm25()
-                );
-                supplies = geminiService.generate(lat, lng, date, prompt);
-            }
+                    originWeather.getLocationName(),
+                    originWeather.getTmp(),
+                    originWeather.getMinTemp(),
+                    originWeather.getMaxTemp(),
+                    originWeather.getSky(),
+                    originWeather.getPcp(),
+                    originWeather.getPm10(),
+                    originWeather.getPm25(),
 
-            return new ResponseWeatherDto(locationName, todayWeather, supplies);
+                    destinationWeather.getLocationName(),
+                    destinationWeather.getTmp(),
+                    destinationWeather.getMinTemp(),
+                    destinationWeather.getMaxTemp(),
+                    destinationWeather.getSky(),
+                    destinationWeather.getPcp(),
+                    destinationWeather.getPm10(),
+                    destinationWeather.getPm25()
+            );
 
-        } catch (IllegalStateException e) {
-            return null;  // ✅ 컨트롤러에서 204 처리
-        }
+            return geminiService.generate(
+                    prompt, GeminiSuppliesResultDto.class, key);
     }
 
+    }
 
+    public String getTodayBriefing(Long userId, String contents){
+
+        LocalDateTime today = LocalDateTime.now();
+        String date = today.format(DateTimeFormatter.BASIC_ISO_DATE);
+
+        Long routineId = liveRouteService.getTodayRoutine(userId)
+                .getId();
+        String key = getBriefingKey(routineId, date);
+
+
+        try {
+
+            return (String) redisTemplate.opsForValue()
+                            .get(key);
+        } catch (IllegalStateException e) {
+            String prompt = """
+                %s 내용을 바탕으로 최대 2줄로 요약해줘.
+                요약된 내용은 오늘의 브리핑 내용으로 들어갈거니깐 그 점 참조해서 주요 내용만 뽑아줘.
+                """.formatted(contents);
+
+            return geminiService.generate(
+                    prompt, String.class, key);
+        }
+
+    }
+
+    private String getSuppliesKey(Long routineId, String date){
+        return "supplies:" + ":" + routineId + ":" + date;
+    }
+
+    private String getBriefingKey(Long routineId, String date){
+        return "briefing:" + ":" + routineId + ":" + date;
+    }
 
     private String getPmKey(String date){
         return "pm:" + date;
     }
 
     private String getWeatherKey(double lat, double lng, String date){
-        return "weather" + ":" + geminiService.getLat(lat) + ":" +  geminiService.getLng(lng) + ":" + date;
+        return "weather" + ":" + getLat(lat) + ":" +  getLng(lng) + ":" + date;
     }
 
+    private double getLat(double lat) {
+        return Math.round(lat * 100) / 100.0;
+    }
 
+    private double getLng(double lng) {
+        return Math.round(lng * 100) / 100.0;
+    }
 
 }

@@ -17,6 +17,7 @@ public class DetourDto {
     private int path_id;
     private double total_duration_min;
     private int transfer_count;
+    private int cost;
     private List<pathSegments> path_segments;
 
     @Getter

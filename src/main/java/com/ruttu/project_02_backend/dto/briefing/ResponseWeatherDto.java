@@ -18,10 +18,8 @@ public class ResponseWeatherDto {
     private String pcp; // 강수량
     private String pm10; // 미세먼지
     private String pm25; // 초미세먼지
-    private String clothes; // 옷차림
-    private String supplies; // 준비물
 
-    public ResponseWeatherDto(String locationName, TodayWeatherAirQualityDto weather, GeminiResultDto supplies){
+    public ResponseWeatherDto(String locationName, TodayWeatherAirQualityDto weather){
         this.setLocationName(locationName);
         this.setTmp(weather.getTmp());
         this.setMinTemp(weather.getMinTemp());
@@ -30,7 +28,5 @@ public class ResponseWeatherDto {
         this.setPcp(weather.getPcp());
         this.setPm10(weather.getPm10());
         this.setPm25(weather.getPm25());
-        this.setClothes(supplies.getClothes());
-        this.setSupplies(supplies.getSupplies());
     }
 }

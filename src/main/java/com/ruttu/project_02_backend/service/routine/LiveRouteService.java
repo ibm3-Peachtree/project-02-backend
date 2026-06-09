@@ -150,7 +150,7 @@ public class LiveRouteService {
         RouteDto liveRouteForReportDto = new RouteDto(detour.getPath_id(),
                 detour.getPath_segments().stream().mapToInt(DetourDto.pathSegments::getTotal_distance_m).sum()/1000, //km
                 (int) detour.getTotal_duration_min(),
-                999999,
+                detour.getCost(),
                 detour.getPath_segments().stream()
                         .filter(p -> !p.getDisplay_name().getFirst().equals("도보"))
                         .findFirst()
@@ -196,17 +196,28 @@ public class LiveRouteService {
     @Transactional(readOnly = true)
     public void sendIncidentsDetour(Long userId, String principalName){
         try {
-            String incident = (String) redisTemplate.opsForValue()
-                    .get(getIncidentsKey(userId));
+            List<Object> jsonList = redisTemplate.opsForList().range(
+                    getIncidentsKey(userId),
+                    0,
+                    -1
+            );
+
+            List<String> incidents = jsonList.stream()
+                    .map(json -> routineService.readJson(
+                            json.toString(),
+                            IncidentsDto.class
+                    ))
+                    .map(IncidentsDto::getIncident)
+                    .toList();
 
             List<DetourDto> detourList = getDetourList(userId);
 
             // null이면 전송 스킵
-            if (incident != null) {
+            if (!incidents.isEmpty()) {
                 messagingTemplate.convertAndSendToUser(
                         principalName,
                         "/queue/incident",
-                        incident
+                        incidents
                 );
             }
 
@@ -230,10 +241,10 @@ public class LiveRouteService {
                 new TypeReference<List<DetourDto>>() {}
         );
     }
-    private static String getIncidentsKey(Long userId) {
+    private String getIncidentsKey(Long userId) {
         return "user:incidents:" + userId;
     }
-    private static String getDetourKey(Long userId) {
+    private String getDetourKey(Long userId) {
         return "routine:live:incident:full:" + userId;
     }
 
