@@ -38,6 +38,14 @@ public class UserService {
 
         System.out.println("닉네임 변경 후 : " + user.getNickname());
     }
+
+    public void updateFcmToken(Long userId, String token){
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+        user.setAppPushToken(token);
+        userRepository.save(user);
+    }
+
     // 내 정보 조회
     public MyInfoDto getMyInfo(Long userId) {
 

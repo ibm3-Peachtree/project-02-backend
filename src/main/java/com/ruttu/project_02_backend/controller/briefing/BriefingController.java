@@ -2,9 +2,8 @@ package com.ruttu.project_02_backend.controller.briefing;
 
 import com.ruttu.project_02_backend.config.CustomUserDetails;
 import com.ruttu.project_02_backend.dto.briefing.CalendarItemsDto;
+import com.ruttu.project_02_backend.dto.briefing.GeminiSuppliesResultDto;
 import com.ruttu.project_02_backend.dto.briefing.ResponseWeatherDto;
-import com.ruttu.project_02_backend.dto.routine.live.LiveRouteDto;
-import com.ruttu.project_02_backend.dto.routine.routine.RouteListDto;
 import com.ruttu.project_02_backend.service.briefing.BriefingService;
 import com.ruttu.project_02_backend.service.briefing.CalendarService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,9 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -36,8 +33,8 @@ public class BriefingController {
 
     // 날씨
     @Operation(
-            summary = "날씨 조회",
-            description = "날씨, 미세먼지, 준비물 조회"
+            summary = "출발지의 날씨 조회",
+            description = "날씨, 미세먼지 조회"
     )
     @ApiResponses({
             @ApiResponse(
@@ -58,12 +55,82 @@ public class BriefingController {
             )
     }
     )
-    @GetMapping("/weather")
-    public ResponseEntity<ResponseWeatherDto> getWeather(
+    @GetMapping("/weather/origin")
+    public ResponseEntity<ResponseWeatherDto> getOriginWeather(
             Authentication auth
-    ){
+    ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
-        return ResponseEntity.ok(briefingService.getWeather(user.getUserId()));
+        ResponseWeatherDto result = briefingService.getOriginWeather(user.getUserId());
+        if (result == null) return ResponseEntity.noContent().build(); // 204
+        return ResponseEntity.ok(result);
+    }
+
+    // 날씨
+    @Operation(
+            summary = "목적지의 날씨 조회",
+            description = "날씨, 미세먼지 조회"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "날씨 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ResponseWeatherDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "날씨 조회 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            )
+    }
+    )
+    @GetMapping("/weather/destination")
+    public ResponseEntity<ResponseWeatherDto> getDestinationWeather(
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        ResponseWeatherDto result = briefingService.getDestinationWeather(user.getUserId());
+        if (result == null) return ResponseEntity.noContent().build(); // 204
+        return ResponseEntity.ok(result);
+    }
+
+    // 날씨
+    @Operation(
+            summary = "준비물 조회",
+            description = "준비물 조회"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "준비물 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = GeminiSuppliesResultDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "준비물 조회 실패",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Void.class)
+                    )
+            )
+    }
+    )
+    @GetMapping("/supplies")
+    public ResponseEntity<GeminiSuppliesResultDto> getSupplies(
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        GeminiSuppliesResultDto result = briefingService.getSupplies(user.getUserId());
+        if (result == null) return ResponseEntity.noContent().build(); // 204
+        return ResponseEntity.ok(result);
     }
 
     // 일정
@@ -98,5 +165,23 @@ public class BriefingController {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
         return ResponseEntity.ok(calendarService.getCalendar(user.getUserId()));
     }
+
+
+    // 오늘의 브리핑
+    @Operation(
+            summary = "브리핑 조회",
+            description = "브리핑 조회"
+    )
+    @PostMapping("/summary")
+    public ResponseEntity<String> getTodayBriefing(
+            @RequestBody String contents,
+            Authentication auth
+    ){
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        return ResponseEntity.ok(briefingService.getTodayBriefing(
+                user.getUserId(), contents));
+
+    }
+
 
 }

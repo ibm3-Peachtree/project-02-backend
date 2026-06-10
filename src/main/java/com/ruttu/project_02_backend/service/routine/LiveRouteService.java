@@ -22,9 +22,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 @RequiredArgsConstructor
@@ -46,8 +44,13 @@ public class LiveRouteService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Transactional
-    public LiveRouteDto getMyRoute(Long userId) {
-        UserRoutineEntity routine = getTodayRoutine(userId);
+    public LiveRouteDto getMyRoute(Long userId, Long routineId) {
+        UserRoutineEntity routine;
+        if (routineId == null){
+            routine = getTodayRoutine(userId);
+        }else {
+            routine = getRoutine(routineId);
+        }
 
         // routine 없으면 null 반환
         if (routine == null) return null;
@@ -87,6 +90,8 @@ public class LiveRouteService {
                 );
                 saveTodayMyRouteAtRedis(userId, liveRouteForReportDto);
                 saveTodayMyXYAtRedis(userId, routeXYForReportDto);
+                System.out.println("myroute: 오디세이");
+
                 return liveRoute;
             } else {
                 System.out.println("일치하는 경로 없음");
@@ -101,6 +106,7 @@ public class LiveRouteService {
                 );
                 saveTodayMyRouteAtRedis(userId, liveRouteForReportDto);
                 saveTodayMyXYAtRedis(userId, routeXYForReportDto);
+                System.out.println("myroute: 오디세이에 없음");
                 return savedRoute; // 일치 경로 없으면 저장된 경로 반환
             }
 
@@ -150,7 +156,7 @@ public class LiveRouteService {
         RouteDto liveRouteForReportDto = new RouteDto(detour.getPath_id(),
                 detour.getPath_segments().stream().mapToInt(DetourDto.pathSegments::getTotal_distance_m).sum()/1000, //km
                 (int) detour.getTotal_duration_min(),
-                999999,
+                detour.getCost(),
                 detour.getPath_segments().stream()
                         .filter(p -> !p.getDisplay_name().getFirst().equals("도보"))
                         .findFirst()
@@ -196,26 +202,41 @@ public class LiveRouteService {
     @Transactional(readOnly = true)
     public void sendIncidentsDetour(Long userId, String principalName){
         try {
-            String incident = (String) redisTemplate.opsForValue()
-                    .get(getIncidentsKey(userId));
+            Set<Object> jsonSet = Optional.ofNullable(redisTemplate.opsForSet()
+                    .members(getIncidentsKey(userId)))
+                    .orElse(Collections.emptySet());
+
+            List<String> incidents = jsonSet.stream()
+                    .map(json -> routineService.readJson(
+                            json.toString(),
+                            IncidentsDto.class
+                    ))
+                    .map(IncidentsDto::getIncident)
+                    .toList();
 
             List<DetourDto> detourList = getDetourList(userId);
-            messagingTemplate.convertAndSendToUser(
-                    principalName,
-                    "/queue/incident",
-                    incident
-            );
 
-            messagingTemplate.convertAndSendToUser(
-                    principalName,
-                    "/queue/detour",
-                    detourList
-            );
+            // null이면 전송 스킵
+            if (!incidents.isEmpty()) {
+                System.out.println("incident 전송 중!!!");
+                messagingTemplate.convertAndSendToUser(
+                        principalName,
+                        "/queue/incident",
+                        incidents
+                );
+            }
 
-        }catch (IllegalStateException e){
+            if (detourList != null && !detourList.isEmpty()) {
+                messagingTemplate.convertAndSendToUser(
+                        principalName,
+                        "/queue/detour",
+                        detourList
+                );
+            }
+
+        } catch (Exception e) {  // IllegalStateException → Exception으로 확장
             log.debug("incident/detour 전송 스킵. userId={}", userId);
         }
-
     }
 
     @Transactional(readOnly = true)
@@ -225,10 +246,10 @@ public class LiveRouteService {
                 new TypeReference<List<DetourDto>>() {}
         );
     }
-    private static String getIncidentsKey(Long userId) {
+    private String getIncidentsKey(Long userId) {
         return "user:incidents:" + userId;
     }
-    private static String getDetourKey(Long userId) {
+    private String getDetourKey(Long userId) {
         return "routine:live:incident:full:" + userId;
     }
 
@@ -244,11 +265,17 @@ public class LiveRouteService {
     // 추천 경로 목록 조회
     @Transactional(readOnly = true)
     public List<RouteListDto> getRecommendedRoute(
-            Long userId
+            Long userId,
+            Long routineId
     ) {
 
         // 주소를 조회하여 lat, lng 값 가져오기
-        UserRoutineEntity routine = getTodayRoutine(userId);
+        UserRoutineEntity routine;
+        if (routineId == null){
+            routine = getTodayRoutine(userId);
+        }else {
+            routine = getRoutine(routineId);
+        }
 
         OdsayXYDto xy = odsayIOService.getOdsayXyByAlias(
                 userId, routine.getOriginAlias(), routine.getDestinationAlias());
@@ -521,6 +548,11 @@ public class LiveRouteService {
         String key = getTodayRecoXYKey(userId);
         String json = mapper.writeValueAsString(routeXYForReportDto);
         redisTemplate.opsForValue().set(key, json);
+    }
+
+    public UserRoutineEntity getRoutine(Long routineId){
+        return userRoutineRepository.findById(routineId)
+                .orElse(null);
     }
 
     public UserRoutineEntity getTodayRoutine(Long userId){

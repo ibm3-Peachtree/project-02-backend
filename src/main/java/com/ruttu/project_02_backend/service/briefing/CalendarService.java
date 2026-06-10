@@ -26,7 +26,8 @@ public class CalendarService {
 
     private final AuthService authService;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
 
     public List<CalendarItemsDto> getCalendar(
             Long userId
@@ -77,7 +78,6 @@ public class CalendarService {
                             .queryParam("timeMax", timeMax)
                             .buildAndExpand(item.getId())
                             .toUriString();
-                    System.out.println("url="+ url);
                     return restTemplate.exchange(
                             url,
                             HttpMethod.GET,

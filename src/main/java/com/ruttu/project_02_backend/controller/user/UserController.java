@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +37,17 @@ public class UserController {
 
         return ResponseEntity.ok().build();
     }
+
+    @SecurityRequirement(name = "JWT")
+    @PostMapping("/fcm-token")
+    public void updateFcmToken(
+            @RequestBody String token,
+            Authentication auth
+    ) {
+        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+        userService.updateFcmToken(user.getUserId(),token);
+    }
+
 
     @GetMapping("/me")
     @Operation(

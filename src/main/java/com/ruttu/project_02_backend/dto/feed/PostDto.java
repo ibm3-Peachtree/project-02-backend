@@ -1,8 +1,7 @@
 package com.ruttu.project_02_backend.dto.feed;
 
-import java.io.File;
-import java.util.Optional;
-
+import com.ruttu.project_02_backend.entity.prod.feed.enumtype.IssueType;
+import com.ruttu.project_02_backend.entity.prod.feed.enumtype.TransportType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,8 +15,8 @@ public class PostDto {
 
     private String title;
     private String content;
-    private Optional<File> image;
-    private String route;
-    private String station;
-    private String issueType;
+    private TransportType transportType; // BUS / SUBWAY
+    private String lineNumber;
+    private String stationName;
+    private IssueType issueType;
 }

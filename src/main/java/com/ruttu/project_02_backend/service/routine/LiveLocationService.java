@@ -1,5 +1,6 @@
 package com.ruttu.project_02_backend.service.routine;
 
+import com.google.firebase.messaging.FirebaseMessagingException;
 import com.ruttu.project_02_backend.dto.routine.live.*;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentSectionDto;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentXYDto;
@@ -8,6 +9,7 @@ import com.ruttu.project_02_backend.dto.routine.location.LiveLocationDto;
 import com.ruttu.project_02_backend.dto.routine.odsay.RouteXYDto;
 import com.ruttu.project_02_backend.entity.prod.routine.UserRoutineEntity;
 import com.ruttu.project_02_backend.exception.routine.RouteNotFoundException;
+import com.ruttu.project_02_backend.service.push.PushService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -17,8 +19,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 @Service
@@ -26,6 +27,7 @@ import java.util.stream.IntStream;
 public class LiveLocationService {
     private final LiveRouteService liveRouteService;
     private final RoutineService routineService;
+    private final PushService pushService;
 
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -66,7 +68,9 @@ public class LiveLocationService {
     }
 
     @Transactional(readOnly = true)
-    public void getMyCurrentSection(Long userId, String principalName, LiveLocationDto liveLocationDto){
+    public void getMyCurrentSection(
+            Long userId, String principalName, LiveLocationDto liveLocationDto
+    ){
         CurrentXYDto xy = new CurrentXYDto(liveLocationDto);
         UserRoutineEntity routine = liveRouteService.getTodayRoutine(userId);
         if (routine == null) throw new RouteNotFoundException("루틴 없음");
@@ -76,7 +80,6 @@ public class LiveLocationService {
                         liveRouteService.getTodayMyXYKey(userId)),
                 new TypeReference<RouteXYForReportDto>() {}
         );
-        System.out.println("나의 경로 레디스 통과");
 
         // 가장 가까운 지점 = 현재 향하고 있는 목표 지점
         List<RouteXYDto> routeXYList = routeXY.getRouteXYDtoList();
@@ -91,7 +94,6 @@ public class LiveLocationService {
                                 routeXYList.get(i).getY(), routeXYList.get(i).getX())
                 ))
                 .orElse(-1);
-        System.out.println("index: " + nearestIndex);
         if (nearestIndex >= 0)
             messagingTemplate.convertAndSendToUser(
                     principalName,
@@ -102,7 +104,11 @@ public class LiveLocationService {
                                 .map(RouteXYDto::getNo).toList(),
                         routeXYList
                 )
-        );
+             );
+            RunGetOffNotification(userId, nearestIndex, routeXYList);
+
+
+
     }
 
     @Transactional(readOnly = true)
@@ -148,10 +154,43 @@ public class LiveLocationService {
                                 .map(RouteXYDto::getNo).toList(),
                         routeXY
                 )
-        );
+            );
+            RunGetOffNotification(userId, nearestIndex, routeXY);
     }
 
 
+    private void RunGetOffNotification(Long userId, int nearestIndex, List<RouteXYDto> routeXYList){
+        Map<String, Integer> lastIndexByNo = new HashMap<>();
+        for (int i = 0; i < routeXYList.size(); i++) {
+            RouteXYDto dto = routeXYList.get(i);
+            if (!dto.getNo().equals("walk"))
+                lastIndexByNo.put(dto.getNo(), i);
+        }
+        String trafficType = routeXYList.get(nearestIndex).getNo();
+        if (!trafficType.equals("walk")){
+            int remainingStations = lastIndexByNo.get(trafficType) - nearestIndex;
+            if (remainingStations>0) {
+                try {
+                    String key = "last-getoff-index:" + userId;
+
+                    String lastIndex = (String) redisTemplate.opsForValue().get(key);
+                    if (!Objects.equals(
+                            Integer.parseInt(lastIndex),
+                            nearestIndex)) {
+                        pushService.sendGetOffNotification(userId, remainingStations);
+
+                        redisTemplate.opsForValue().set(
+                                key,
+                                String.valueOf(nearestIndex)
+                        );
+                    }
+
+                } catch (FirebaseMessagingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
     private double distanceMeters(double lat1, double lng1, double lat2, double lng2) {
         final double R = 6371000;
         double dLat = Math.toRadians(lat2 - lat1);
