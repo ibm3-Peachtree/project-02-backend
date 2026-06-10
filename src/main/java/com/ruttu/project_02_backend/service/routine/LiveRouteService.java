@@ -45,7 +45,12 @@ public class LiveRouteService {
 
     @Transactional
     public LiveRouteDto getMyRoute(Long userId, Long routineId) {
-        UserRoutineEntity routine = getTodayRoutine(routineId);
+        UserRoutineEntity routine;
+        if (routineId == null){
+            routine = getTodayRoutine(userId);
+        }else {
+            routine = getRoutine(routineId);
+        }
 
         // routine 없으면 null 반환
         if (routine == null) return null;
@@ -85,6 +90,8 @@ public class LiveRouteService {
                 );
                 saveTodayMyRouteAtRedis(userId, liveRouteForReportDto);
                 saveTodayMyXYAtRedis(userId, routeXYForReportDto);
+                System.out.println("myroute: 오디세이");
+
                 return liveRoute;
             } else {
                 System.out.println("일치하는 경로 없음");
@@ -99,6 +106,7 @@ public class LiveRouteService {
                 );
                 saveTodayMyRouteAtRedis(userId, liveRouteForReportDto);
                 saveTodayMyXYAtRedis(userId, routeXYForReportDto);
+                System.out.println("myroute: 오디세이에 없음");
                 return savedRoute; // 일치 경로 없으면 저장된 경로 반환
             }
 
@@ -262,7 +270,12 @@ public class LiveRouteService {
     ) {
 
         // 주소를 조회하여 lat, lng 값 가져오기
-        UserRoutineEntity routine = getRoutine(routineId);
+        UserRoutineEntity routine;
+        if (routineId == null){
+            routine = getTodayRoutine(userId);
+        }else {
+            routine = getRoutine(routineId);
+        }
 
         OdsayXYDto xy = odsayIOService.getOdsayXyByAlias(
                 userId, routine.getOriginAlias(), routine.getDestinationAlias());

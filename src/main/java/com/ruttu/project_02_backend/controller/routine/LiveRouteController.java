@@ -59,9 +59,9 @@ public class LiveRouteController {
             )
     }
     )
-    @GetMapping("/route/{routineId}")
+    @GetMapping({"/routines", "/routines/{routineId}"})
     public ResponseEntity<LiveRouteDto> getMyRoute(
-            @PathVariable Long routineId,
+            @PathVariable(required = false) Long routineId,
             Authentication auth
     ) {
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
@@ -107,7 +107,7 @@ public class LiveRouteController {
             )
     }
     )
-    @GetMapping("/reco/{routineId}")
+    @GetMapping({"/reco", "/reco/{routineId}"})
     public ResponseEntity<List<RouteListDto>> getRecommendedRoute(
             @PathVariable Long routineId,
             Authentication auth
