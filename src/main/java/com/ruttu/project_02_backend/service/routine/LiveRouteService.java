@@ -22,9 +22,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 @RequiredArgsConstructor
@@ -196,13 +194,11 @@ public class LiveRouteService {
     @Transactional(readOnly = true)
     public void sendIncidentsDetour(Long userId, String principalName){
         try {
-            List<Object> jsonList = redisTemplate.opsForList().range(
-                    getIncidentsKey(userId),
-                    0,
-                    -1
-            );
+            Set<Object> jsonSet = Optional.ofNullable(redisTemplate.opsForSet()
+                    .members(getIncidentsKey(userId)))
+                    .orElse(Collections.emptySet());
 
-            List<String> incidents = jsonList.stream()
+            List<String> incidents = jsonSet.stream()
                     .map(json -> routineService.readJson(
                             json.toString(),
                             IncidentsDto.class
@@ -214,6 +210,7 @@ public class LiveRouteService {
 
             // null이면 전송 스킵
             if (!incidents.isEmpty()) {
+                System.out.println("incident 전송 중!!!");
                 messagingTemplate.convertAndSendToUser(
                         principalName,
                         "/queue/incident",
