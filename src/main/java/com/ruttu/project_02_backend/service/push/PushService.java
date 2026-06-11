@@ -73,7 +73,7 @@ public class PushService {
 
         LocalTime now = LocalTime.now();
 
-        LocalTime departureTime  = now.minusMinutes(targetTime);
+        LocalTime departureTime  = now.plusMinutes(targetTime);
         List<UserRoutineEntity> routines = userRoutineRepository.findAllByTargetArrivalTime(departureTime );
         List<UserEntity> users = userRepository.findAllByDepartureMinutes(targetTime + "분 전");
         Map<Long, UserEntity> userMap = users.stream()
