@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -71,16 +73,14 @@ public class PushService {
 
         LocalTime now = LocalTime.now();
 
-        LocalTime fiveMinutesAgo = now.minusMinutes(targetTime);
-        List<UserRoutineEntity> routines = userRoutineRepository.findAllByTargetArrivalTime(fiveMinutesAgo);
+        LocalTime departureTime  = now.minusMinutes(targetTime);
+        List<UserRoutineEntity> routines = userRoutineRepository.findAllByTargetArrivalTime(departureTime );
         List<UserEntity> users = userRepository.findAllByDepartureMinutes(targetTime + "분 전");
+        Map<Long, UserEntity> userMap = users.stream()
+                .collect(Collectors.toMap(UserEntity::getId, u -> u));
 
         for (UserRoutineEntity routine : routines) {
-
-             UserEntity user = users.stream()
-                    .filter(u -> u.getId().equals(routine.getUserId()))
-                    .findFirst()
-                    .orElse(null);
+            UserEntity user = userMap.get(routine.getUserId());
              if(user!=null)
                 sendPush(
                         user.getAppPushToken(),

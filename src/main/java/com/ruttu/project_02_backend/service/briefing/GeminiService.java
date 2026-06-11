@@ -44,7 +44,8 @@ public class GeminiService {
                         )
                 ),
                 "generationConfig", Map.of(
-                        "responseMimeType", "application/json"
+                        "responseMimeType",
+                        clazz == String.class ? "text/plain" : "application/json"  // ✅ String이면 text/plain
                 )
         );
 
@@ -72,12 +73,19 @@ public class GeminiService {
                         .getFirst()
                         .getText();
 
-                ObjectMapper mapper = new ObjectMapper();
+                T res;
+                if (clazz == String.class) {
+                    res = clazz.cast(text);
+                } else {
+                    ObjectMapper mapper = new ObjectMapper();
+                    res = mapper.readValue(text, clazz);
+                }
 
-                T res = mapper.readValue(text, clazz);
-
-                String json = mapper.writeValueAsString(res);
-                redisTemplate.opsForValue().set(key, json);
+                // ✅ Redis 저장도 분기
+                String toCache = clazz == String.class
+                        ? (String) res
+                        : new ObjectMapper().writeValueAsString(res);
+                redisTemplate.opsForValue().set(key, toCache);
 
                 return res;
 

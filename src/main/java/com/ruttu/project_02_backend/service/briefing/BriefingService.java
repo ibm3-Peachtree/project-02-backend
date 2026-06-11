@@ -173,32 +173,25 @@ public class BriefingService {
 
     }
 
-    public String getTodayBriefing(Long userId, String contents){
+    public String getTodayBriefing(Long userId, String contents) {
 
         LocalDateTime today = LocalDateTime.now();
         String date = today.format(DateTimeFormatter.BASIC_ISO_DATE);
 
-        Long routineId = liveRouteService.getTodayRoutine(userId)
-                .getId();
+        Long routineId = liveRouteService.getTodayRoutine(userId).getId();
+        System.out.println("오늘의 브리핑 대상: routineId: " + routineId);
         String key = getBriefingKey(routineId, date);
 
+        String cached = (String) redisTemplate.opsForValue().get(key);
+        if (cached != null) return cached;
 
-        try {
+        String prompt = """
+            %s 내용을 바탕으로 최대 2줄로 요약해줘.
+            요약된 내용은 오늘의 브리핑 내용으로 들어갈거니깐 그 점 참조해서 주요 내용만 뽑아줘.
+            """.formatted(contents);
 
-            return (String) redisTemplate.opsForValue()
-                            .get(key);
-        } catch (IllegalStateException e) {
-            String prompt = """
-                %s 내용을 바탕으로 최대 2줄로 요약해줘.
-                요약된 내용은 오늘의 브리핑 내용으로 들어갈거니깐 그 점 참조해서 주요 내용만 뽑아줘.
-                """.formatted(contents);
-
-            return geminiService.generate(
-                    prompt, String.class, key);
-        }
-
+        return geminiService.generate(prompt, String.class, key);
     }
-
     private String getSuppliesKey(Long routineId, String date){
         return "supplies:" + ":" + routineId + ":" + date;
     }

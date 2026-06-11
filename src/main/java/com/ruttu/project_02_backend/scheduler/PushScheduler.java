@@ -13,7 +13,7 @@ public class PushScheduler {
 
     private final PushService pushService;
 
-    @Scheduled(cron = "* 5 * * * *")
+    @Scheduled(cron = "0 */5 * * * *")  // 매 5분마다
     public void sendDepartureNotifications() throws FirebaseMessagingException {
 
         // 5분 전
@@ -29,7 +29,7 @@ public class PushScheduler {
         pushService.sendDepartureNotification(30);
     }
 
-    @Scheduled(cron = "* 1 * * * *")
+    @Scheduled(cron = "0 */1 * * * *")
     public void sendBriefingNotifications() throws FirebaseMessagingException{
         pushService.sendBriefingNotifications();
     }
