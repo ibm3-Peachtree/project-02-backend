@@ -24,6 +24,7 @@ public class TodayRoutineForDBDto {
     private int totalDistanceMeter;
     private int estimatedCalories;
     private boolean isLate;
+    private boolean startedLate;
     private boolean isRouteFollowed;
     private boolean isComfort;
     private Integer satWaitTimeScore;

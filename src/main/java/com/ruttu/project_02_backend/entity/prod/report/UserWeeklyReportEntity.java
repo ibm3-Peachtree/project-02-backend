@@ -47,11 +47,26 @@ public class UserWeeklyReportEntity {
     @Column(name = "weekly_burned_calories")
     private Integer weeklyBurnedCalories;
 
+    @Column(name = "total_late_count")
+    private Integer totalLateCount;
+
     @Column(name = "late_risk_count")
     private Integer lateRiskCount;
 
     @Column(name = "avg_wait_time_min")
     private Integer avgWaitTimeMin;
+
+    @Column(name = "change_route_count")
+    private Integer changeRouteCount;
+
+    @Column(name = "avg_sat_wait_time_score")
+    private Double avgSatWaitTimeScore;
+
+    @Column(name = "avg_sat_eta_score")
+    private Double avgSatEtaScore;
+
+    @Column(name = "avg_sat_route_score")
+    private Double avgSatRouteScore;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "daily", nullable = false)

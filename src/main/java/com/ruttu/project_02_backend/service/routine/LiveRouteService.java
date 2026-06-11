@@ -427,7 +427,11 @@ public class LiveRouteService {
                         && isNegativeDifference(
                         userRoutineEntity.getTargetArrivalTime(),
                         routineCompleteDto.getArrivalTime()),
-                todayXY.equals(userRoutineEntity.getPreferredRouteXy()),
+                        isNegativeDifference(
+                        userRoutineEntity.getTargetArrivalTime(),
+                        routineCompleteDto.getArrivalTime()),
+                userRoutineEntity.getPreferredRouteXy()
+                        .equals(todayXY.getRouteXYDtoList()),
                 comfortIndex>0.3,
                 routineCompleteDto.getSatWaitTimeScore(),
                 routineCompleteDto.getSatEtaScore(),
@@ -443,12 +447,9 @@ public class LiveRouteService {
         entity.setTransportCost(todayRoute.getPayment());
         entity.setTotalDistanceMeter(todayRoute.getTotalDistance());
         entity.setEstimatedCalories(todayRoutineForDBDto.getEstimatedCalories());
-        entity.setLate(isNegativeDifference(
-                userRoutineEntity.getTargetArrivalTime(),
-                routineCompleteDto.getArrivalTime()));
-        entity.setRouteFollowed(
-                userRoutineEntity.getPreferredRouteXy()
-                        .equals(todayXY.getRouteXYDtoList()));
+        entity.setLate(todayRoutineForDBDto.isLate());
+        entity.setStartedLate(todayRoutineForDBDto.isStartedLate());
+        entity.setRouteFollowed(todayRoutineForDBDto.isRouteFollowed());
         entity.setComfort(todayRoutineForDBDto.isComfort());
         entity.setSatWaitTimeScore(routineCompleteDto.getSatWaitTimeScore());
         entity.setSatEtaScore(routineCompleteDto.getSatEtaScore());
@@ -479,9 +480,6 @@ public class LiveRouteService {
         long seconds = Duration.between(arrivalTime, targetArrivalTime).getSeconds();
         return seconds < 0;
     }
-
-
-
 
 
     public String getLocationKey(Long userId){
