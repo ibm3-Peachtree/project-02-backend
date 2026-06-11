@@ -56,6 +56,9 @@ public class UserDailyStatsEntity {
     @Column(name = "is_late", nullable = false)
     private boolean isLate;
 
+    @Column(name = "started_late", nullable = false)
+    private boolean startedLate;
+
     @Column(name = "is_route_followed", nullable = false)
     private boolean isRouteFollowed;
 

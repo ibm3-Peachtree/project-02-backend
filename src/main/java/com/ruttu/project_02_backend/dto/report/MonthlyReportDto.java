@@ -15,15 +15,20 @@ import lombok.Setter;
 public class MonthlyReportDto {
     private Long id;
     private Long userRoutineId;
-    private int year;
-    private int month;
+    private Integer year;
+    private Integer month;
     private LocalDate monthStartDate;
     private CommuteTimeMinDto avgCommuteTimeMin;
     private CommuteTimeMinDto maxCommuteTimeMin;
     private CommuteTimeMinDto minCommuteTimeMin;
-    private int monthlyTransportCost;
-    private int monthlyBurnedCalories;
-    private int lateRiskCount;
+    private Integer monthlyTransportCost;
+    private Integer monthlyBurnedCalories;
+    private Integer lateRiskCount;
+    private Integer totalLateCount;
+    private Integer changeRouteCount;
+    private Double avgSatWaitTimeScore;
+    private Double avgSatEtaScore;
+    private Double avgSatRouteScore;
     private ComfortTimeDto recommendedComfortTime;
 
     public MonthlyReportDto(UserMonthlyReportEntity entity){
@@ -38,6 +43,11 @@ public class MonthlyReportDto {
         this.setMonthlyTransportCost(entity.getMonthlyTransportCost());
         this.setMonthlyBurnedCalories(entity.getMonthlyBurnedCalories());
         this.setLateRiskCount(entity.getLateRiskCount());
+        this.setTotalLateCount(entity.getTotalLateCount());
+        this.setChangeRouteCount(entity.getChangeRouteCount());
+        this.setAvgSatWaitTimeScore(entity.getAvgSatWaitTimeScore());
+        this.setAvgSatEtaScore(entity.getAvgSatEtaScore());
+        this.setAvgSatRouteScore(entity.getAvgSatRouteScore());
         this.setRecommendedComfortTime(entity.getRecommendedComfortTime());
     }
 }

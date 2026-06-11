@@ -15,13 +15,18 @@ import lombok.Setter;
 public class WeeklyReportDto {
     private Long id;
     private Long userRoutineId;
-    private int year;
-    private int weekOfYear;
+    private Integer year;
+    private Integer weekOfYear;
     private LocalDate weekStartDate;
-    private int avgCommuteTimeMin;
-    private int weeklyTransportCost;
-    private int weeklyBurnedCalories;
-    private int lateRiskCount;
+    private Integer avgCommuteTimeMin;
+    private Integer weeklyTransportCost;
+    private Integer weeklyBurnedCalories;
+    private Integer lateRiskCount;
+    private Integer totalLateCount;
+    private Integer changeRouteCount;
+    private Double avgSatWaitTimeScore;
+    private Double avgSatEtaScore;
+    private Double avgSatRouteScore;
     private Integer avgWaitTimeMin;
     private DailyDto daily;
 
@@ -34,6 +39,11 @@ public class WeeklyReportDto {
         this.setWeeklyTransportCost(entity.getWeeklyTransportCost());
         this.setWeeklyBurnedCalories(entity.getWeeklyBurnedCalories());
         this.setLateRiskCount(entity.getLateRiskCount());
+        this.setTotalLateCount(entity.getTotalLateCount());
+        this.setChangeRouteCount(entity.getChangeRouteCount());
+        this.setAvgSatWaitTimeScore(entity.getAvgSatWaitTimeScore());
+        this.setAvgSatEtaScore(entity.getAvgSatEtaScore());
+        this.setAvgSatRouteScore(entity.getAvgSatRouteScore());
         this.setAvgWaitTimeMin(entity.getAvgWaitTimeMin());
         this.setDaily(entity.getDaily());
     }
