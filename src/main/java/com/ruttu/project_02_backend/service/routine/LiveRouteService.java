@@ -5,9 +5,11 @@ import com.ruttu.project_02_backend.dto.routine.location.LiveLocationDto;
 import com.ruttu.project_02_backend.dto.routine.odsay.*;
 import com.ruttu.project_02_backend.dto.routine.live.*;
 import com.ruttu.project_02_backend.dto.routine.routine.RouteListDto;
+import com.ruttu.project_02_backend.entity.prod.user.UserAddressEntity;
 import com.ruttu.project_02_backend.entity.stats.UserDailyStatsEntity;
 import com.ruttu.project_02_backend.entity.prod.routine.UserRoutineEntity;
 import com.ruttu.project_02_backend.exception.routine.RoutineNotFoundException;
+import com.ruttu.project_02_backend.repository.prod.user.UserAddressRepository;
 import com.ruttu.project_02_backend.repository.stats.UserDailyStatsRepository;
 import com.ruttu.project_02_backend.repository.prod.routine.UserRoutineRepository;
 
@@ -23,6 +25,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.time.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class LiveRouteService {
     private static final Logger log =
             LoggerFactory.getLogger(LiveRouteService.class);
 
+    private final UserAddressRepository userAddressRepository;
     private final UserRoutineRepository userRoutineRepository;
     private final UserDailyStatsRepository userDailyStatsRepository;
 
@@ -60,6 +64,7 @@ public class LiveRouteService {
 
         OdsayXYDto xy = odsayIOService.getOdsayXyByAlias(
                 userId, routine.getOriginAlias(), routine.getDestinationAlias());
+        UserAddressEntity lastLocation = userAddressRepository.findByUserIdAndAlias(userId,routine.getDestinationAlias());
 
         try {
             OdsayResponseDto routes = odsayIOService.getOdsay(xy);
@@ -86,7 +91,17 @@ public class LiveRouteService {
                 );
                 RouteXYForReportDto routeXYForReportDto = new RouteXYForReportDto(
                         routine.getId(),
-                        routeListXY.get(matchedIndex)
+                        new ArrayList<>(routeListXY.get(matchedIndex)) // ✅
+                );
+                routeXYForReportDto.getRouteXYDtoList().addLast(
+                        new RouteXYDto(
+                                "도착",
+                                lastLocation.getLng().doubleValue(),
+                                lastLocation.getLat().doubleValue(),
+                                null,
+                                "도착",
+                                "도착"
+                        )
                 );
                 saveTodayMyRouteAtRedis(userId, liveRouteForReportDto);
                 saveTodayMyXYAtRedis(userId, routeXYForReportDto);
@@ -102,7 +117,17 @@ public class LiveRouteService {
                 );
                 RouteXYForReportDto routeXYForReportDto = new RouteXYForReportDto(
                         routine.getId(),
-                        savedRouteXY
+                        new ArrayList<>(routeListXY.get(matchedIndex)) // ✅
+                );
+                routeXYForReportDto.getRouteXYDtoList().addLast(
+                        new RouteXYDto(
+                                "도착",
+                                lastLocation.getLng().doubleValue(),
+                                lastLocation.getLat().doubleValue(),
+                                null,
+                                "도착",
+                                "도착"
+                        )
                 );
                 saveTodayMyRouteAtRedis(userId, liveRouteForReportDto);
                 saveTodayMyXYAtRedis(userId, routeXYForReportDto);
@@ -294,7 +319,7 @@ public class LiveRouteService {
             saveDetailRoutes(subPaths, infos, userId);
 
             // x,y 좌표 저장
-            saveRouteXY(paths, userId);
+            saveRouteXY(paths, userId, routine.getDestinationAlias());
 
             List<List<String>> trafficTypes = odsayIOService.getTrafficTypeNo(subPaths);
             return IntStream.range(0, infos.size())
@@ -490,15 +515,28 @@ public class LiveRouteService {
     }
 
     private void saveRouteXY(List<OdsayPathDto> path,
-                             Long userId) {
+                             Long userId,
+                             String destinationAlias) {
 
+
+        UserAddressEntity lastLocation = userAddressRepository.findByUserIdAndAlias(userId,destinationAlias);
         List<List<RouteXYDto>> stations = odsayIOService.getRouteXY(path);
 
         IntStream.range(0, stations.size())
                 .forEach(i -> {
                     String key = routeXyKey(userId, i);
-
-                    String json = mapper.writeValueAsString(stations.get(i));
+                    List<RouteXYDto> station = new ArrayList<>(stations.get(i));
+                    station.addLast(
+                            new RouteXYDto(
+                                    "도착",
+                                    lastLocation.getLng().doubleValue(),
+                                    lastLocation.getLat().doubleValue(),
+                                    null,
+                                    "도착",
+                                    "도착"
+                            )
+                    );
+                    String json = mapper.writeValueAsString(station);
                     redisTemplate.opsForValue().set(key, json);
                     System.out.println("saved " + key);
                 });
@@ -555,15 +593,21 @@ public class LiveRouteService {
                 .orElse(null);
     }
 
-    public UserRoutineEntity getTodayRoutine(Long userId){
-        return userRoutineRepository.findAllByUserId(userId)
+    public UserRoutineEntity getTodayRoutine(Long userId) {
+        LocalTime now = LocalTime.now(KST);
+        List<UserRoutineEntity> todayRoutines = userRoutineRepository.findAllByUserId(userId)
                 .stream()
                 .filter(r -> isToday(r.getPreferredDowMask()))
-                .min(Comparator.comparingInt(item ->
-                        Math.abs(LocalTime.now(KST).toSecondOfDay()
-                                - item.getRecoDepartureTime().toSecondOfDay())
-                ))
-                .orElse(null);
+                .collect(Collectors.toList());
+
+        // 1순위: 아직 출발 안 한 것 중 가장 가까운 것
+        return todayRoutines.stream()
+                .filter(r -> r.getRecoDepartureTime().isAfter(now))
+                .min(Comparator.comparing(UserRoutineEntity::getRecoDepartureTime))
+                // 2순위: 이미 지난 것 중 가장 최근 것 (모두 지났을 때 fallback)
+                .orElseGet(() -> todayRoutines.stream()
+                        .max(Comparator.comparing(UserRoutineEntity::getRecoDepartureTime))
+                        .orElse(null));
     }
 
     private boolean isToday(long mask) {
