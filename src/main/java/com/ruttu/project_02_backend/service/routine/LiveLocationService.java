@@ -1,14 +1,13 @@
 package com.ruttu.project_02_backend.service.routine;
 
 import com.google.firebase.messaging.FirebaseMessagingException;
-import com.ruttu.project_02_backend.dto.routine.live.*;
+import com.ruttu.project_02_backend.dto.routine.live.RouteXYForReportDto;
+import com.ruttu.project_02_backend.dto.routine.location.CurrentLocationDto;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentSectionDto;
 import com.ruttu.project_02_backend.dto.routine.location.CurrentXYDto;
-import com.ruttu.project_02_backend.dto.routine.location.CurrentLocationDto;
 import com.ruttu.project_02_backend.dto.routine.location.LiveLocationDto;
 import com.ruttu.project_02_backend.dto.routine.odsay.RouteXYDto;
 import com.ruttu.project_02_backend.entity.prod.routine.UserRoutineEntity;
-import com.ruttu.project_02_backend.entity.prod.user.UserAddressEntity;
 import com.ruttu.project_02_backend.exception.routine.RouteNotFoundException;
 import com.ruttu.project_02_backend.repository.prod.user.UserAddressRepository;
 import com.ruttu.project_02_backend.service.push.PushService;
@@ -20,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.IntStream;
