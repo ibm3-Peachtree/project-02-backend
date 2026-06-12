@@ -5,19 +5,23 @@ import com.ruttu.project_02_backend.dto.briefing.CalendarItemsDto;
 import com.ruttu.project_02_backend.service.auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.time.*;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -70,21 +74,26 @@ public class CalendarService {
         return items
                 .stream()
                 .map(item -> {
-                    String url = UriComponentsBuilder
-                            .fromUriString("https://www.googleapis.com/calendar/v3/calendars/{id}/events")
-                            .queryParam("singleEvents", true)
-                            .queryParam("orderBy", "startTime")
-                            .queryParam("timeMin", timeMin)
-                            .queryParam("timeMax", timeMax)
-                            .buildAndExpand(item.getId())
-                            .toUriString();
-                    return restTemplate.exchange(
-                            url,
-                            HttpMethod.GET,
-                            entity,
-                            CalendarItemsDto.class
-                    ).getBody();
+                    try {
+                        String url = UriComponentsBuilder
+                                .fromUriString("https://www.googleapis.com/calendar/v3/calendars/{id}/events")
+                                .queryParam("singleEvents", true)
+                                .queryParam("orderBy", "startTime")
+                                .queryParam("timeMin", timeMin)
+                                .queryParam("timeMax", timeMax)
+                                .buildAndExpand(item.getId())
+                                .toUriString();
+                        return restTemplate.exchange(
+                                url,
+                                HttpMethod.GET,
+                                entity,
+                                CalendarItemsDto.class
+                        ).getBody();
+                    }catch (HttpClientErrorException.NotFound e) {
+                        return null;
+                    }
                 })
+                .filter(Objects::nonNull)
                 .toList();
     }
 
