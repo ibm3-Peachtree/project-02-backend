@@ -40,7 +40,7 @@ jobs:
         run: |
           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
           docker push $IMAGE_URI
-          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
           
       # 6. ECS 새 task 정의
       - name: Fill in the new image ID in the Amazon ECS task definition # 파일만 생성
@@ -51,7 +51,7 @@ jobs:
           container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ steps.push-image.outputs.image }}
 
-      # ECS 서비스 업데이트
+      # 7. ECS 서비스 업데이트
       - name: Deploy Amazon ECS task definition # 실제 배포
         uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a
         with:
