@@ -49,13 +49,24 @@ jobs:
             --task-definition ecs-task-01 \
             --query taskDefinition \
             > task-definition.json
+          
+          jq 'del(
+            .enableFaultInjection,
+            .taskDefinitionArn,
+            .revision,
+            .status,
+            .requiresAttributes,
+            .compatibilities,
+            .registeredAt,
+            .registeredBy
+          )' task-definition.json > task-definition-clean.json
 
       # 7. ECS 새 task 정의
       - name: Fill in the new image ID in the Amazon ECS task definition # 파일만 생성
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc
         with:
-          task-definition: task-definition.json
+          task-definition: task-definition-clean.json
           container-name: ${{ secrets.CONTAINER_NAME }}
           image: ${{ steps.push-image.outputs.image }}
 
