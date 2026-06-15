@@ -5,9 +5,6 @@ on:
     branches:
       - release
 
-env:
-  ECS_TASK_DEFINITION: .github/workflows/ecs-task-01-revision37.json
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,17 +41,25 @@ jobs:
           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
           docker push $IMAGE_URI
           echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
-          
-      # 6. ECS 새 task 정의
+
+      # 6. 정의 내려받기
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ secrets.TASK_DEFINITION_FAMILY  }} \
+            --query taskDefinition \
+            > task-definition.json
+
+      # 7. ECS 새 task 정의
       - name: Fill in the new image ID in the Amazon ECS task definition # 파일만 생성
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc
         with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION }}
+          task-definition: task-definition.json
           container-name: ${{ secrets.CONTAINER_NAME }}
           image: ${{ steps.push-image.outputs.image }}
 
-      # 7. ECS 서비스 업데이트
+      # 8. ECS 서비스 업데이트
       - name: Deploy Amazon ECS task definition # 실제 배포
         uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a
         with:
