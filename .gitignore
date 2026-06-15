@@ -43,4 +43,4 @@ out/
 #**/*.yaml
 **/*.json
 
-!ecs-task-01-revision37.json
+!**/ecs-task-01-revision37.json
