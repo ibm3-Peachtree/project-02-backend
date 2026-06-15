@@ -6,7 +6,7 @@ on:
       - release
 
 env:
-  ECS_TASK_DEFINITION: ecs-task-01-revision37.json
+  ECS_TASK_DEFINITION: .github/workflows/ecs-task-01-revision37.json
 
 jobs:
   build:
